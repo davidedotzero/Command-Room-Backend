@@ -13,10 +13,56 @@ app.get('/', (req, res) => {
 });
 app.get('/api/getTest', (req, res) => {
     db.query("select * from test", (err, result) => {
+        // handle err properly
         if (err) {
             console.log(err);
         }
         console.log(result);
+        res.send(result);
+    });
+});
+app.get('/api/getAllTeams', (req, res) => {
+    db.query("select * from Team", (err, result) => {
+        // handle err properly
+        if (err) {
+            console.log(err);
+        }
+        res.send(result);
+    });
+});
+app.get('/api/getAllTaskStatuses', (req, res) => {
+    db.query("select * from TaskStatus", (err, result) => {
+        // handle err properly
+        if (err) {
+            console.log(err);
+        }
+        res.send(result);
+    });
+});
+app.get('/api/getAllDefaultTaskNames', (req, res) => {
+    db.query("select * from DefaultTaskName", (err, result) => {
+        // handle err properly
+        if (err) {
+            console.log(err);
+        }
+        res.send(result);
+    });
+});
+app.get('/api/getAllProjects', (req, res) => {
+    db.query("select * from Project", (err, result) => {
+        // handle err properly
+        if (err) {
+            console.log(err);
+        }
+        res.send(result);
+    });
+});
+app.get('/api/getAllActiveProjects', (req, res) => {
+    db.query("select * from Project where isArchived = FALSE", (err, result) => {
+        // handle err properly
+        if (err) {
+            console.log(err);
+        }
         res.send(result);
     });
 });
