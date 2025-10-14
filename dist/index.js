@@ -33,6 +33,10 @@ app.get('/api/ping', async (req, res) => {
         res.status(500).send('Error querying the database');
     }
 });
+app.get('/api/test', async (req, res) => {
+    const [results] = await db.query("select * from test");
+    res.send(results);
+});
 app.get('/api/verifyEmail/:email', async (req, res) => {
     try {
         const { email } = req.params;

@@ -46,11 +46,12 @@ router.get('/', async (req, res) => {
             SELECT 
                 Task.taskID, Task.projectID, Task.taskName, Task.deadline, Task.taskStatusID, Task.teamHelpID, 
                 Task.helpReqAt, Task.helpReqReason, Task.logPreview, Task.createdAt, Task.updatedAt, Task.teamID, 
-                Team.teamName, TaskStatus.taskStatusName, TeamHelp.teamName as "teamHelpName",
+                Team.teamName, TaskStatus.taskStatusName, TeamHelp.teamName as "teamHelpName", Project.projectName,
                 GROUP_CONCAT(CONCAT_WS(":", User.userID, User.userName, User.email, User.teamID, TeamUser.teamName, User.isAdmin) SEPARATOR ";") as "workers"
             FROM Task
             JOIN Team ON Task.teamID = Team.teamID
             JOIN TaskStatus ON Task.taskStatusID = TaskStatus.taskStatusID
+            JOIN Project ON Task.projectID = Project.projectID
             LEFT JOIN Team as TeamHelp ON Task.teamHelpID = TeamHelp.teamID
             LEFT JOIN TaskUser ON Task.taskID = TaskUser.taskID
             LEFT JOIN User ON TaskUser.userID = User.userID
