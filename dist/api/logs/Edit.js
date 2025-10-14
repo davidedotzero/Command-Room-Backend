@@ -24,8 +24,8 @@ router.post("/edit/", async (req, res) => {
         if (!Array.isArray(newLog)) {
             const sql = `
                 INSERT INTO EditLog(eLogID, date, reason, fromStatusID, toStatusID, fromDeadline, toDeadline, taskID, userID) VALUES 
-                (?,FROM_UNIXTIME(?),?,?,?,?,?,?,?)`;
-            const params = [new_elogid, (new Date()).getTime(), newLog.reason, newLog.fromStatusID, newLog.toStatusID, insertingFromDeadline, insertingToDeadline, newLog.taskID, newLog.userID];
+                (?,NOW(),?,?,?,?,?,?,?)`;
+            const params = [new_elogid, newLog.reason, newLog.fromStatusID, newLog.toStatusID, insertingFromDeadline, insertingToDeadline, newLog.taskID, newLog.userID];
             const [result] = await db.query(sql, params);
             res.send(result);
         }

@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
 
 router.get('/active/', async (req, res) => {
     try {
-        const [results] = await db.query("SELECT * FROM Project WHERE isArchived = FALSE");
+        const [results] = await db.query("SELECT * FROM Project WHERE isArchived = FALSE order by createdAt desc");
         res.send(results);
     } catch (err) {
         console.error(err);
