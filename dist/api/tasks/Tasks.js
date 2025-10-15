@@ -126,8 +126,8 @@ router.post("/", async (req, res) => {
             return res.status(400).send('Data is required.');
         }
         if (!Array.isArray(newTask)) {
-            const sql = "INSERT INTO `Task`(`taskID`, `projectID`, `taskName`, `deadline`, `taskStatusID`, `teamHelpID`, `helpReqAt`, `helpReqReason`, `logPreview`, `createdAt`, `updatedAt`, `teamID`) VALUES (?,?,?,?,?,?,?,?,?,FROM_UNIXTIME(?),?,?)";
-            const params = [newTask.taskID, newTask.projectID, newTask.taskName, formatDateYYYY_MM_DD_Dashes(new Date(newTask.deadline)), newTask.taskStatusID, null, null, null, "", new Date().getTime(), null, newTask.teamID];
+            const sql = "INSERT INTO `Task`(`taskID`, `projectID`, `taskName`, `deadline`, `taskStatusID`, `teamHelpID`, `helpReqAt`, `helpReqReason`, `logPreview`, `createdAt`, `updatedAt`, `teamID`) VALUES (?,?,?,?,?,?,?,?,?,NOW(),?,?)";
+            const params = [newTask.taskID, newTask.projectID, newTask.taskName, formatDateYYYY_MM_DD_Dashes(new Date(newTask.deadline)), newTask.taskStatusID, null, null, null, "", null, newTask.teamID];
             const [result] = await db.query(sql, params);
             res.send(result);
         }
@@ -151,8 +151,18 @@ router.put("/", async (req, res) => {
             throw new Error("Only allow updating one record at a time");
         }
         const taskID = updateData.taskID;
-        const sql = "UPDATE `Task` SET `taskName`=?,`deadline`=?,`taskStatusID`=?,`teamHelpID`=?,`helpReqAt`=?,`helpReqReason`=?,`logPreview`=?,`updatedAt`=FROM_UNIXTIME(?),`teamID`=? WHERE taskID = ?";
-        const params = [updateData.taskName, formatDateYYYY_MM_DD_Dashes(new Date(updateData.deadline)), updateData.taskStatusID, updateData.teamHelpID, updateData.helpReqAt, updateData.helpReqReason, updateData.logPreview, new Date().getTime(), updateData.teamID, taskID];
+        const sql = "UPDATE `Task` SET `taskName`=?,`deadline`=?,`taskStatusID`=?,`teamHelpID`=?,`helpReqAt`=?,`helpReqReason`=?,`logPreview`=?,`updatedAt`=NOW(),`teamID`=? WHERE taskID = ?";
+        const params = [
+            updateData.taskName,
+            formatDateYYYY_MM_DD_Dashes(new Date(updateData.deadline)),
+            updateData.taskStatusID,
+            updateData.teamHelpID,
+            updateData.helpReqAt === null ? null : formatDateYYYY_MM_DD_Dashes(new Date(updateData.helpReqAt)),
+            updateData.helpReqReason,
+            updateData.logPreview,
+            updateData.teamID,
+            taskID
+        ];
         const [result] = await db.query(sql, params);
         res.send(result);
     }

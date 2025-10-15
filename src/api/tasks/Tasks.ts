@@ -166,7 +166,18 @@ router.put("/", async (req, res) => {
         const taskID = updateData.taskID;
 
         const sql = "UPDATE `Task` SET `taskName`=?,`deadline`=?,`taskStatusID`=?,`teamHelpID`=?,`helpReqAt`=?,`helpReqReason`=?,`logPreview`=?,`updatedAt`=NOW(),`teamID`=? WHERE taskID = ?"
-        const params = [updateData.taskName, formatDateYYYY_MM_DD_Dashes(new Date(updateData.deadline)), updateData.taskStatusID, updateData.teamHelpID, updateData.helpReqAt, updateData.helpReqReason, updateData.logPreview, updateData.teamID, taskID];
+        const params =
+            [
+                updateData.taskName,
+                formatDateYYYY_MM_DD_Dashes(new Date(updateData.deadline)),
+                updateData.taskStatusID,
+                updateData.teamHelpID,
+                updateData.helpReqAt === null ? null : formatDateYYYY_MM_DD_Dashes(new Date(updateData.helpReqAt)),
+                updateData.helpReqReason,
+                updateData.logPreview,
+                updateData.teamID,
+                taskID
+            ];
 
         const [result] = await db.query(sql, params);
         res.send(result);
