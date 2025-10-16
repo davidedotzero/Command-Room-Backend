@@ -1,6 +1,6 @@
 import express from 'express';
 import { db } from '../../db.js';
-import { formatDateYYYY_MM_DD_Dashes, genSingleNewID } from '../../util.js';
+import { formatDateYYYY_MM_DD_Dashes, genSingleNewID, getBangkokDate } from '../../util.js';
 const router = express.Router();
 // add new log
 router.post("/edit/", async (req, res) => {
@@ -19,8 +19,8 @@ router.post("/edit/", async (req, res) => {
         const latest_id = results[0].eLogID;
         const new_elogid = genSingleNewID(latest_id);
         // because if fromDeadline or toDeadline is null javascript will parse it as the beginning of unix epoch FOR SOME FUCKING REASON. JUST THROW ME A FUCKING ERROR STOP TRYING TO BE "CLEVER" U IDIOT FUCK TRASH SHIT BITCH NIGERIA
-        const insertingFromDeadline = newLog.fromDeadline == null ? null : formatDateYYYY_MM_DD_Dashes(new Date(newLog.fromDeadline));
-        const insertingToDeadline = newLog.toDeadline == null ? null : formatDateYYYY_MM_DD_Dashes(new Date(newLog.toDeadline));
+        const insertingFromDeadline = newLog.fromDeadline == null ? null : getBangkokDate(new Date(newLog.fromDeadline));
+        const insertingToDeadline = newLog.toDeadline == null ? null : getBangkokDate(new Date(newLog.toDeadline));
         if (!Array.isArray(newLog)) {
             const sql = `
                 INSERT INTO EditLog(eLogID, date, reason, fromStatusID, toStatusID, fromDeadline, toDeadline, taskID, userID) VALUES 

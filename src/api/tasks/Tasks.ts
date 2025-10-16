@@ -1,7 +1,7 @@
 import express from 'express';
 import { db } from '../../db.js';
 import type { QueryResult } from 'mysql2';
-import { formatDateYYYY_MM_DD_Dashes } from '../../util.js';
+import { formatDateYYYY_MM_DD_Dashes, getBangkokDate } from '../../util.js';
 import { formatInTimeZone } from 'date-fns-tz';
 const router = express.Router();
 
@@ -34,7 +34,7 @@ const parseWorkerString = (results: QueryResult) => {
         return {
             ...row,
             workers,
-            deadline: new Date(row.deadline),
+            deadline: new Date(row.deadline), // TODO: maybe new Date() is not necessary cuz it gonna get turn into ISOString anyway when we throw it back to frontend
             createdAt: new Date(row.createdAt),
             updatedAt: row.updatedAt ? new Date(row.updatedAt) : null,
         };
@@ -136,16 +136,28 @@ router.post("/", async (req, res) => {
             return res.status(400).send('Data is required.');
         }
 
-        console.log(newTask);
-        console.log(newTask.deadline);
-        console.log(new Date(newTask.deadline));
-        console.log(formatDateYYYY_MM_DD_Dashes(new Date(newTask.deadline)));
-        console.log(formatInTimeZone(new Date(newTask.deadline), 'Asia/Bangkok', "yyyy-MM-dd HH:mm:ss"));
-        return;
+        // console.log(newTask);
+        // console.log(newTask.deadline);
+        // console.log(new Date(newTask.deadline));
+        // console.log(formatDateYYYY_MM_DD_Dashes(new Date(newTask.deadline)));
+        // console.log(formatInTimeZone(new Date(newTask.deadline), 'Asia/Bangkok', "yyyy-MM-dd HH:mm:ss"));
+        // return;
 
         if (!Array.isArray(newTask)) {
             const sql = "INSERT INTO `Task`(`taskID`, `projectID`, `taskName`, `deadline`, `taskStatusID`, `teamHelpID`, `helpReqAt`, `helpReqReason`, `logPreview`, `createdAt`, `updatedAt`, `teamID`) VALUES (?,?,?,?,?,?,?,?,?,NOW(),?,?)"
-            const params = [newTask.taskID, newTask.projectID, newTask.taskName, formatDateYYYY_MM_DD_Dashes(new Date(newTask.deadline)), newTask.taskStatusID, null, null, null, "", null, newTask.teamID];
+            const params = [
+                newTask.taskID,
+                newTask.projectID,
+                newTask.taskName,
+                getBangkokDate(new Date(newTask.deadline)),
+                newTask.taskStatusID,
+                null,
+                null,
+                null,
+                "",
+                null,
+                newTask.teamID
+            ];
 
 
             const [result] = await db.query(sql, params);
@@ -177,10 +189,10 @@ router.put("/", async (req, res) => {
         const params =
             [
                 updateData.taskName,
-                formatDateYYYY_MM_DD_Dashes(new Date(updateData.deadline)),
+                getBangkokDate(new Date(updateData.deadline)),
                 updateData.taskStatusID,
                 updateData.teamHelpID,
-                updateData.helpReqAt === null ? null : formatDateYYYY_MM_DD_Dashes(new Date(updateData.helpReqAt)),
+                updateData.helpReqAt === null ? null : getBangkokDate(new Date(updateData.helpReqAt)),
                 updateData.helpReqReason,
                 updateData.logPreview,
                 updateData.teamID,
