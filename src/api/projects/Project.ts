@@ -1,6 +1,6 @@
 import express from 'express';
 import { db } from '../../db.js';
-import { genMultipleNewID, genSingleNewID, genSingleNewShortID, formatDateYYYY_MM_DD_Dashes, toMySQLTimestamp } from '../../util.js';
+import { genMultipleNewID, genSingleNewID, genSingleNewShortID, formatDateYYYY_MM_DD_Dashes, getBangkokDate, getBangkokTimestamp } from '../../util.js';
 const router = express.Router();
 
 router.get('/', async (req, res) => {
@@ -124,7 +124,26 @@ router.post('/', async (req, res) => {
             return;
         }
 
+<<<<<<< HEAD
         res.send(results2);
+=======
+        // insert new tasks
+        const sql4 = "INSERT INTO `Task`(`taskID`, `projectID`, `taskName`, `deadline`, `taskStatusID`, `createdAt`, `teamID`) VALUES ?"
+        // @ts-expect-error
+        const values = data.tasks.map((x, idx) =>
+            [
+                new_taskIDs[idx],
+                new_projectID,
+                x.taskName,
+                getBangkokDate(new Date(x.deadline)),
+                1,
+                getBangkokTimestamp(new Date()), // basically sql NOW() in utc+7
+                x.team.teamID
+            ]);
+        const [results4] = await db.query(sql4, [values])
+
+        res.send(results4);
+>>>>>>> dev-w
     } catch (err) {
         console.error(err);
         res.status(500).send('Error querying the database');

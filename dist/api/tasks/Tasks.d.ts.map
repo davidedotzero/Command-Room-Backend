@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 {"version":3,"file":"Tasks.d.ts","sourceRoot":"","sources":["../../../src/api/tasks/Tasks.ts"],"names":[],"mappings":"AAIA,QAAA,MAAM,MAAM,4CAAmB,CAAC;AAgMhC,eAAe,MAAM,CAAC"}
+=======
+{"version":3,"file":"Tasks.d.ts","sourceRoot":"","sources":["../../../src/api/tasks/Tasks.ts"],"names":[],"mappings":"AAKA,QAAA,MAAM,MAAM,4CAAmB,CAAC;AAiNhC,eAAe,MAAM,CAAC"}
+>>>>>>> dev-w
