@@ -125,6 +125,11 @@ router.post("/", async (req, res) => {
         if (!newTask) {
             return res.status(400).send('Data is required.');
         }
+        console.log(newTask);
+        console.log(newTask.deadline);
+        console.log(new Date(newTask.deadline));
+        console.log(formatDateYYYY_MM_DD_Dashes(new Date(newTask.deadline)));
+        // return;
         if (!Array.isArray(newTask)) {
             const sql = "INSERT INTO `Task`(`taskID`, `projectID`, `taskName`, `deadline`, `taskStatusID`, `teamHelpID`, `helpReqAt`, `helpReqReason`, `logPreview`, `createdAt`, `updatedAt`, `teamID`) VALUES (?,?,?,?,?,?,?,?,?,NOW(),?,?)";
             const params = [newTask.taskID, newTask.projectID, newTask.taskName, formatDateYYYY_MM_DD_Dashes(new Date(newTask.deadline)), newTask.taskStatusID, null, null, null, "", null, newTask.teamID];
