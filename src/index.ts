@@ -28,7 +28,7 @@ app.listen(PORT, () => {
 });
 
 app.get('/', async (req, res) => {
-    res.send('hello human!!! o/');
+    res.send('hello human!!! o/: ' + new Date().toString());
 });
 
 app.get('/api/ping', async (req, res) => {

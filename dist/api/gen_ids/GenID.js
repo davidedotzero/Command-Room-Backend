@@ -4,7 +4,7 @@ import { genSingleNewID } from '../../util.js';
 const router = express.Router();
 router.get('/task', async (req, res) => {
     try {
-        const sql = "SELECT taskID FROM Task ORDER BY createdAt DESC LIMIT 1";
+        const sql = "SELECT taskID FROM Task ORDER BY createdAt DESC, taskID DESC LIMIT 1";
         const [results] = await db.query(sql);
         // @ts-expect-error
         if (results.length <= 0) {
