@@ -2,6 +2,7 @@ import express from 'express';
 import { db } from '../../db.js';
 import type { QueryResult } from 'mysql2';
 import { formatDateYYYY_MM_DD_Dashes } from '../../util.js';
+import { formatInTimeZone } from 'date-fns-tz';
 const router = express.Router();
 
 // TODO: use JSON_ARRAYAGG later like this
@@ -139,7 +140,8 @@ router.post("/", async (req, res) => {
         console.log(newTask.deadline);
         console.log(new Date(newTask.deadline));
         console.log(formatDateYYYY_MM_DD_Dashes(new Date(newTask.deadline)));
-        // return;
+        console.log(formatInTimeZone(new Date(newTask.deadline), 'Asia/Bangkok', "yyyy-MM-dd HH:mm:ss"));
+        return;
 
         if (!Array.isArray(newTask)) {
             const sql = "INSERT INTO `Task`(`taskID`, `projectID`, `taskName`, `deadline`, `taskStatusID`, `teamHelpID`, `helpReqAt`, `helpReqReason`, `logPreview`, `createdAt`, `updatedAt`, `teamID`) VALUES (?,?,?,?,?,?,?,?,?,NOW(),?,?)"

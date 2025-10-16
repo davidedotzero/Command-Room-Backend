@@ -8,6 +8,7 @@ import taskRouter from './api/tasks/Tasks.js';
 import genIdRouter from './api/gen_ids/GenID.js';
 import logRouter from './api/logs/Edit.js';
 import taskuserRouter from './api/taskusers/TaskUsers.js'
+import { formatInTimeZone } from 'date-fns-tz/fp';
 
 const app = express();
 const PORT: number = 8080;
@@ -28,7 +29,7 @@ app.listen(PORT, () => {
 });
 
 app.get('/', async (req, res) => {
-    res.send('hello human!!! o/: ' + new Date().toString());
+    res.send('hello human!!! o/: ' + new Date().toString() + " / " + formatInTimeZone(new Date(), "yyyy-MM-dd HH:mm:ss"));
 });
 
 app.get('/api/ping', async (req, res) => {
