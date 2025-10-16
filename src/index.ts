@@ -29,7 +29,7 @@ app.listen(PORT, () => {
 });
 
 app.get('/', async (req, res) => {
-    res.send('hello human!!! o/: ' + new Date().toString() + " / " + formatInTimeZone(new Date(), "yyyy-MM-dd HH:mm:ss"));
+    res.send('hello human!!! o/: ' + new Date().toString() + " / " + formatInTimeZone(new Date(), "Asia/Bangkok", "yyyy-MM-dd HH:mm:ss"));
 });
 
 app.get('/api/ping', async (req, res) => {
