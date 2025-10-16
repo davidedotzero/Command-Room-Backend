@@ -143,6 +143,10 @@ router.post("/", async (req, res) => {
         // console.log(formatInTimeZone(new Date(newTask.deadline), 'Asia/Bangkok', "yyyy-MM-dd HH:mm:ss"));
         // return;
 
+        console.log(newTask.deadline);
+        console.log(new Date(newTask.deadline));
+        console.log(getBangkokDate(new Date(newTask.deadline)));
+
         if (!Array.isArray(newTask)) {
             const sql = "INSERT INTO `Task`(`taskID`, `projectID`, `taskName`, `deadline`, `taskStatusID`, `teamHelpID`, `helpReqAt`, `helpReqReason`, `logPreview`, `createdAt`, `updatedAt`, `teamID`) VALUES (?,?,?,?,?,?,?,?,?,NOW(),?,?)"
             const params = [

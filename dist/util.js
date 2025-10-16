@@ -1,9 +1,9 @@
 import { formatInTimeZone, toDate } from "date-fns-tz";
 export function getBangkokDate(date) {
-    return formatInTimeZone(new Date(), "Asia/Bangkok", "yyyy-MM-dd");
+    return formatInTimeZone(date, "Asia/Bangkok", "yyyy-MM-dd");
 }
 export function getBangkokTimestamp(date) {
-    return formatInTimeZone(new Date(), "Asia/Bangkok", "yyyy-MM-dd HH:mm:ss");
+    return formatInTimeZone(date, "Asia/Bangkok", "yyyy-MM-dd HH:mm:ss");
 }
 export function formatDateYYYY_MM_DD_Dashes(date) {
     return `${date.getFullYear().toString()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
@@ -48,8 +48,6 @@ export function genSingleNewID(latestID) {
     let newNum = null;
     let newDate = null;
     // comparing "yyyy-MM-dd to yyyy-MM-dd"
-    console.log(idDate);
-    console.log(getBangkokDate(new Date()));
     if (idDate === getBangkokDate(new Date())) {
         newNum = idNum + 1;
         newDate = strDate;

@@ -1,11 +1,11 @@
 import { formatInTimeZone, toDate } from "date-fns-tz";
 
 export function getBangkokDate(date: Date): string {
-    return formatInTimeZone(new Date(), "Asia/Bangkok", "yyyy-MM-dd");
+    return formatInTimeZone(date, "Asia/Bangkok", "yyyy-MM-dd");
 }
 
 export function getBangkokTimestamp(date: Date): string {
-    return formatInTimeZone(new Date(), "Asia/Bangkok", "yyyy-MM-dd HH:mm:ss");
+    return formatInTimeZone(date, "Asia/Bangkok", "yyyy-MM-dd HH:mm:ss");
 }
 
 export function formatDateYYYY_MM_DD_Dashes(date: Date): string {
@@ -62,8 +62,6 @@ export function genSingleNewID(latestID: string): string {
     let newDate: string | null = null;
 
     // comparing "yyyy-MM-dd to yyyy-MM-dd"
-    console.log(idDate);
-    console.log(getBangkokDate(new Date()));
     if (idDate === getBangkokDate(new Date())) {
         newNum = idNum + 1;
         newDate = strDate;
