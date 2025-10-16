@@ -10,6 +10,8 @@ import logRouter from './api/logs/Edit.js';
 import taskuserRouter from './api/taskusers/TaskUsers.js'
 import { formatInTimeZone } from 'date-fns-tz/fp';
 
+import { th } from 'date-fns/locale';
+
 const app = express();
 const PORT: number = 8080;
 

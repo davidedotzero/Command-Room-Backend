@@ -8,6 +8,7 @@ import genIdRouter from './api/gen_ids/GenID.js';
 import logRouter from './api/logs/Edit.js';
 import taskuserRouter from './api/taskusers/TaskUsers.js';
 import { formatInTimeZone } from 'date-fns-tz/fp';
+import { th } from 'date-fns/locale';
 const app = express();
 const PORT = 8080;
 app.use(cors());
@@ -23,7 +24,7 @@ app.listen(PORT, () => {
         + 'on port http://localhost/' + PORT);
 });
 app.get('/', async (req, res) => {
-    res.send('hello human!!! o/: ' + new Date().toString() + " / " + formatInTimeZone(new Date(), "yyyy-MM-dd HH:mm:ss"));
+    res.send('hello human!!! o/: ' + new Date().toString() + " / " + formatInTimeZone(new Date(), "Asia/Bangkok", "yyyy-MM-dd HH:mm:ss"));
 });
 app.get('/api/ping', async (req, res) => {
     try {
