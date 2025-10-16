@@ -87,7 +87,7 @@ router.post('/', async (req, res) => {
         }
 
         // get new projectID
-        const sql = "SELECT projectID FROM Project ORDER BY createdAt DESC LIMIT 1";
+        const sql = "SELECT projectID FROM Project ORDER BY createdAt DESC, projectID DESC LIMIT 1";
         const [results] = await db.execute(sql);
         // @ts-expect-error
         if (results.length <= 0) {
@@ -102,25 +102,29 @@ router.post('/', async (req, res) => {
         const [results2] = await db.query(sql2, [new_projectID, data.projectName]);
         // check if results2 ok then continue;
 
-        // get new taskIDs
-        const sql3 = "SELECT taskID FROM Task ORDER BY createdAt DESC, taskID DESC LIMIT 1;";
-        const [results3] = await db.execute(sql3);
-        // @ts-expect-error
-        if (results3.length <= 0) {
-            return res.status(404).send('TODO: handle empty task table. No task found.');
+        if (Array.isArray(data.tasks) && data.tasks.length > 0) {
+            // get new taskIDs
+            const sql3 = "SELECT taskID FROM Task ORDER BY createdAt DESC, taskID DESC LIMIT 1;";
+            const [results3] = await db.execute(sql3);
+            // @ts-expect-error
+            if (results3.length <= 0) {
+                return res.status(404).send('TODO: handle empty task table. No task found.');
+            }
+            // @ts-expect-error
+            const latest_taskID = results3[0].taskID;
+            const new_taskIDs = genMultipleNewID(latest_taskID, data.tasks.length);
+
+            // insert new tasks
+            const sql4 = "INSERT INTO `Task`(`taskID`, `projectID`, `taskName`, `deadline`, `taskStatusID`, `createdAt`, `teamID`) VALUES ?"
+            // @ts-expect-error
+            const values = data.tasks.map((x, idx) => [new_taskIDs[idx], new_projectID, x.taskName, formatDateYYYY_MM_DD_Dashes(new Date(x.deadline)), 1, toMySQLTimestamp(new Date()), x.team.teamID]);
+            const [results4] = await db.query(sql4, [values])
+
+            res.send(results4);
+            return;
         }
-        // @ts-expect-error
-        const latest_taskID = results3[0].taskID;
-        const new_taskIDs = genMultipleNewID(latest_taskID, data.tasks.length);
-        console.log(new_taskIDs);
 
-        // insert new tasks
-        const sql4 = "INSERT INTO `Task`(`taskID`, `projectID`, `taskName`, `deadline`, `taskStatusID`, `createdAt`, `teamID`) VALUES ?"
-        // @ts-expect-error
-        const values = data.tasks.map((x, idx) => [new_taskIDs[idx], new_projectID, x.taskName, formatDateYYYY_MM_DD_Dashes(new Date(x.deadline)), 1, toMySQLTimestamp(new Date()), x.team.teamID]);
-        const [results4] = await db.query(sql4, [values])
-
-        res.send(results4);
+        res.send(results2);
     } catch (err) {
         console.error(err);
         res.status(500).send('Error querying the database');

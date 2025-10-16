@@ -12,7 +12,7 @@ router.post("/edit/", async (req, res) => {
             return res.status(400).send('Data is required.');
         }
 
-        const sql = "SELECT eLogID FROM EditLog ORDER BY date DESC LIMIT 1";
+        const sql = "SELECT eLogID FROM EditLog ORDER BY date DESC, eLogID DESC LIMIT 1";
         const [results] = await db.execute(sql);
         // @ts-expect-error
         if (results.length <= 0) {
