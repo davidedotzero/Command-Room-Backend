@@ -15,7 +15,7 @@ export function parseYYYYMMDD(dateString) {
     const month = parseInt(dateString.substring(4, 6), 10);
     const day = parseInt(dateString.substring(6, 8), 10);
     // this will return Date with no time
-    return `${year}-${(month + 1).toString().padStart(2, "0")}-${(day).toString().padStart(2, "0")}`;
+    return `${year}-${(month).toString().padStart(2, "0")}-${(day).toString().padStart(2, "0")}`;
     // return new Date(year, month - 1, day);
 }
 // export function toMySQLTimestamp(date: Date): string {
@@ -48,14 +48,15 @@ export function genSingleNewID(latestID) {
     let newNum = null;
     let newDate = null;
     // comparing "yyyy-MM-dd to yyyy-MM-dd"
+    console.log(idDate);
+    console.log(getBangkokDate(new Date()));
     if (idDate === getBangkokDate(new Date())) {
         newNum = idNum + 1;
         newDate = strDate;
     }
     else {
         newNum = 1; // reset id for new date
-        const a = new Date();
-        newDate = "" + a.getFullYear() + String(a.getMonth() + 1).padStart(2, "0") + String(a.getDate()).padStart(2, "0");
+        newDate = getBangkokDate(new Date()).replaceAll('-', '');
     }
     return `${prefix}-${newDate}-${String(newNum).padStart(6, "0")}`;
 }
@@ -75,6 +76,7 @@ export function genSingleNewShortID(latestID) {
     }
     else {
         newNum = 1; // reset id for new date
+        // BUG: could be wrong year if we are using just new Date() here, in case our year is 2026 but server is still 2025
         const a = new Date();
         newYear = "" + a.getFullYear();
     }
@@ -98,8 +100,7 @@ export function genMultipleNewID(latestID, count) {
     }
     else {
         startNum = 1; // reset id for new date
-        const a = new Date();
-        newDate = "" + a.getFullYear() + String(a.getMonth() + 1).padStart(2, "0") + String(a.getDate()).padStart(2, "0");
+        newDate = getBangkokDate(new Date()).replaceAll('-', '');
     }
     for (let i = 0; i < count; i++) {
         ids.push(`${prefix}-${newDate}-${String(startNum + i).padStart(6, "0")}`);
