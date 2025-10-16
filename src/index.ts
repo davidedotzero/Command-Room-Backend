@@ -9,6 +9,7 @@ import genIdRouter from './api/gen_ids/GenID.js';
 import logRouter from './api/logs/Edit.js';
 import taskuserRouter from './api/taskusers/TaskUsers.js'
 import { formatInTimeZone } from 'date-fns-tz';
+import { genMultipleNewID, genSingleNewID, genSingleNewShortID } from './util.js';
 
 
 const app = express();
@@ -30,8 +31,7 @@ app.listen(PORT, () => {
 });
 
 app.get('/', async (req, res) => {
-    res.send('hello human!!! o/: ' + new Date().toString() + " / " + formatInTimeZone(new Date(), "Asia/Bangkok", "yyyy-MM-dd HH:mm:ss"));
-    res.send("asdf");
+    res.send('hello human!!! o/: ' + new Date().toString() + " / " + formatInTimeZone(new Date(), "Asia/Bangkok", "yyyy-MM-dd HH:mm:ss") + " / " + genSingleNewID("TASK-20251016-000069") + " / " + genSingleNewShortID("PROJECT-2025-000069") + " / " + genMultipleNewID("TASK-20251016-000069", 10).join(", "));
 });
 
 app.get('/api/ping', async (req, res) => {
