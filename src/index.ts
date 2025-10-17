@@ -11,7 +11,6 @@ import taskuserRouter from './api/taskusers/TaskUsers.js'
 import { formatInTimeZone } from 'date-fns-tz';
 import { genMultipleNewID, genSingleNewID, genSingleNewShortID, getBangkokDate } from './util.js';
 
-
 const app = express();
 const PORT: number = 8080;
 
@@ -80,20 +79,6 @@ app.get('/api/getAllUsersAsc', async (req, res) => {
     }
 });
 
-
-app.get('/api/getLogsByTaskIdDesc/:taskID', async (req, res) => {
-    try {
-        const { taskID } = req.params;
-        const sql = "SELECT * FROM EditLog WHERE taskID = ? ORDER BY date DESC";
-        const [results] = await db.query(sql, [taskID]);
-        res.send(results);
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Error querying the database');
-    }
-});
-
-
 app.get('/api/isProjectIDExists/:projectID', async (req, res) => {
     try {
         const projectID = req.params.projectID;
@@ -109,7 +94,6 @@ app.get('/api/isProjectIDExists/:projectID', async (req, res) => {
         res.status(500).send('Error querying the database');
     }
 });
-
 
 app.get("/api/getAvgHelpLeadDaysBeforeDeadline", async (req, res) => {
     try {
