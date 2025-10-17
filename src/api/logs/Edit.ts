@@ -45,4 +45,17 @@ router.post("/edit/", async (req, res) => {
     }
 });
 
+
+router.get('/edit/:taskID', async (req, res) => {
+    try {
+        const { taskID } = req.params;
+        const sql = "SELECT * FROM EditLog JOIN User on EditLog.userID = User.userID WHERE taskID = ? ORDER BY date DESC";
+        const [results] = await db.query(sql, [taskID]);
+        res.send(results);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error querying the database');
+    }
+});
+
 export default router;
