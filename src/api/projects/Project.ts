@@ -16,7 +16,14 @@ router.get('/', async (req, res) => {
 
 router.get('/active/', async (req, res) => {
     try {
-        const [results] = await db.query("SELECT * FROM Project WHERE isArchived = FALSE order by createdAt desc");
+        const [results] = await db.query
+            (`
+                select Project.projectID, Project.projectName, count(Task.taskID) as recent7days from Project
+                left join Task on Project.projectID = Task.projectID and Task.updatedAt >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                where Project.isArchived = FALSE 
+                group by Project.projectID
+                order by Project.createdAt desc; 
+            `);
         res.send(results);
     } catch (err) {
         console.error(err);
@@ -101,6 +108,11 @@ router.post('/', async (req, res) => {
         const sql2 = "INSERT INTO `Project`(`projectID`, `projectName`, `isArchived`, `createdAt`) VALUES (?,?,FALSE,NOW())"
         const [results2] = await db.query(sql2, [new_projectID, data.projectName]);
         // check if results2 ok then continue;
+
+        if (!data.tasks || data.tasks.length <= 0) {
+            res.send(results2);
+            return;
+        }
 
         // get new taskIDs
         const sql3 = "SELECT taskID FROM Task ORDER BY createdAt DESC, taskID DESC LIMIT 1;";
