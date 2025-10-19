@@ -69,9 +69,10 @@ app.get('/api/verifyEmail/:email', async (req, res) => {
 });
 
 
-app.get('/api/getAllUsersAsc', async (req, res) => {
+// TODO: only select userID and userName
+app.get('/api/getWorkers', async (req, res) => {
     try {
-        const [results] = await db.query("SELECT userID, userName, teamID, isAdmin, email FROM User ORDER BY userName ASC");
+        const [results] = await db.query("SELECT userID, userName FROM User WHERE userID != 'USER-0000-000000' ORDER BY userID ASC");
         res.send(results);
     } catch (err) {
         console.error(err);
