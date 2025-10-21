@@ -42,6 +42,8 @@ app.get('/api/ping', async (req, res) => {
         res.send("pong");
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
@@ -68,6 +70,8 @@ app.get('/api/verifyEmail/:email', async (req, res) => {
         }
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
@@ -80,6 +84,8 @@ app.get('/api/getWorkers', async (req, res) => {
         res.send(results);
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
@@ -96,6 +102,8 @@ app.get('/api/isProjectIDExists/:projectID', async (req, res) => {
     }
     catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
@@ -110,6 +118,8 @@ app.get("/api/getAvgHelpLeadDaysBeforeDeadline", async (req, res) => {
 
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
