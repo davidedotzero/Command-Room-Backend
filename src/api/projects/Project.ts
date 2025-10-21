@@ -60,10 +60,15 @@ router.patch('/name/:projectID', async (req, res) => {
         const sql = "UPDATE `Project` SET `projectName`=? WHERE projectID=?"
         const [results] = await db.query(sql, [projectName.newProjectName, projectID]);
 
-        res.send(results);
+        res.status(201).send({ message: "อัปเดตชื่อโปรเจคสำเร็จ" });
     } catch (err) {
         console.error(err);
-        res.status(500).send('Error querying the database');
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
+        res.status(500).send({
+            message: "Error updating project name.",
+            detail: "" + err
+        });
     }
 });
 
@@ -76,10 +81,15 @@ router.patch('/archive/:projectID', async (req, res) => {
         const sql = "UPDATE `Project` SET `isArchived`=? WHERE projectID=?"
         const [results] = await db.query(sql, [isArchived, projectID]);
 
-        res.send(results);
+        res.status(201).send({ message: "อัปเดตสถานะโปรเจคเป็น จัดเก็บ สำเร็จ" });
     } catch (err) {
         console.error(err);
-        res.status(500).send('Error querying the database');
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
+        res.status(500).send({
+            message: "Error archiving project.",
+            detail: "" + err
+        });
     }
 });
 

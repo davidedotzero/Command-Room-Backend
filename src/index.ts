@@ -24,6 +24,10 @@ app.use('/api/gen_ids/', genIdRouter);
 app.use('/api/logs/', logRouter);
 app.use('/api/taskusers/', taskuserRouter);
 
+db.on('enqueue', function() {
+    console.log('Waiting for available connection slot ' + new Date().toISOString());
+});
+
 app.listen(PORT, () => {
     console.log('The application is listening '
         + 'on port http://localhost/' + PORT);

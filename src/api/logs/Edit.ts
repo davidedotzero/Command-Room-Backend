@@ -58,4 +58,45 @@ router.get('/edit/:taskID', async (req, res) => {
     }
 });
 
+router.patch('/edit/marks/', async (req, res) => {
+    const connection = await db.getConnection();
+
+    try {
+        await connection.beginTransaction();
+        const { markLogs, unmarkLogs } = req.body;
+
+        if (Array.isArray(markLogs) && markLogs.length > 0) {
+            const whereClause = markLogs.map(() => "(eLogID = ?)").join(' OR ');
+
+            const sql = `UPDATE EditLog SET markedDone = TRUE WHERE ${whereClause}`;
+            const [result] = await connection.execute(sql, markLogs);
+
+            // "UPDATE `EditLog` SET markedDone = FALSE WHERE eLogID = "LOG - 20251021-000003" or eLogID = "LOG - 20251021-000004""
+        }
+
+        if (Array.isArray(unmarkLogs) && unmarkLogs.length > 0) {
+            const whereClause = unmarkLogs.map(() => "(eLogID = ?)").join(' OR ');
+
+            const sql = `UPDATE EditLog SET markedDone = FALSE WHERE ${whereClause}`;
+            const [result] = await connection.execute(sql, unmarkLogs);
+        }
+
+        await connection.commit();
+
+        res.status(201).send({ message: "อัปเดตเครื่องหมายเสร็จสิ้นสำเร็จ" });
+
+    } catch (err) {
+        await connection.rollback();
+        console.error("Updating EditLogs markedDone transaction failed: ", err);
+        console.error(new Date().toISOString());
+        console.error("=============================================================");
+        res.status(500).send({
+            message: "Error updating EditLogs markedDone to the database via transaction.",
+            detail: "" + err
+        });
+    } finally {
+        connection.release();
+    }
+});
+
 export default router;
