@@ -24,9 +24,16 @@ app.use('/api/gen_ids/', genIdRouter);
 app.use('/api/logs/', logRouter);
 app.use('/api/taskusers/', taskuserRouter);
 
-db.on('enqueue', function() {
-    console.log('Waiting for available connection slot ' + new Date().toISOString());
-});
+// heartbeat query for keeping connection alive.
+setInterval(() => {
+    db.query('SELECT 1')
+        .then(() => {
+            console.log('Database connection is alive. ' + new Date().toISOString());
+        })
+        .catch(err => {
+            console.error('Database heartbeat query failed:', err);
+        });
+}, 120000);
 
 app.listen(PORT, () => {
     console.log('The application is listening '
@@ -77,7 +84,6 @@ app.get('/api/verifyEmail/:email', async (req, res) => {
 });
 
 
-// TODO: only select userID and userName
 app.get('/api/getWorkers', async (req, res) => {
     try {
         const [results] = await db.query("SELECT userID, userName FROM User WHERE userID != 'USER-0000-000000' ORDER BY userID ASC");
