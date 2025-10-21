@@ -41,6 +41,8 @@ router.post("/edit/", async (req, res) => {
 
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
@@ -54,6 +56,8 @@ router.get('/edit/:taskID', async (req, res) => {
         res.send(results);
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });

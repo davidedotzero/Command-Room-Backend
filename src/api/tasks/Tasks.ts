@@ -64,6 +64,8 @@ router.get('/', async (req, res) => {
         res.send(finalResult);
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
@@ -94,6 +96,8 @@ router.get('/pid/:projectID', async (req, res) => {
         res.send(finalResult);
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
@@ -124,6 +128,8 @@ router.get('/uid/:userID', async (req, res) => {
         res.send(finalResult);
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
@@ -172,6 +178,8 @@ router.post("/", async (req, res) => {
 
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
@@ -208,6 +216,8 @@ router.put("/", async (req, res) => {
 
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 })
