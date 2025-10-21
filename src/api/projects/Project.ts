@@ -101,45 +101,51 @@ router.patch('/archive/:projectID', async (req, res) => {
 
 // add new project with tasks
 router.post('/', async (req, res) => {
+    const connection = await db.getConnection();
+
     try {
+        await connection.beginTransaction();
         const data = req.body;
         //TODO: validate req.body; data.tasks isArray etc.
 
         if (!data) {
-            return res.status(400).send('Data is required.');
+            return res.status(400).send({ message: 'Data is required.' });
         }
 
         // get new projectID
         const sql = "SELECT projectID FROM Project ORDER BY createdAt DESC LIMIT 1";
-        const [results] = await db.execute(sql);
+        const [results] = await connection.execute(sql);
         // @ts-expect-error
         if (results.length <= 0) {
-            return res.status(404).send('TODO: handle empty project table. No project found.');
+            return res.status(404).send({ message: 'TODO: handle empty project table. No project found.' });
         }
         // @ts-expect-error
         const latest_projectID = results[0].projectID;
         const new_projectID = genSingleNewShortID(latest_projectID);
 
+        // TODO: check new_projectID valid with sql here
+
         // insert new project
         const sql2 = "INSERT INTO `Project`(`projectID`, `projectName`, `isArchived`, `createdAt`) VALUES (?,?,FALSE,NOW())"
-        const [results2] = await db.query(sql2, [new_projectID, data.projectName]);
-        // check if results2 ok then continue;
+        const [results2] = await connection.query(sql2, [new_projectID, data.projectName]);
 
         if (!data.tasks || data.tasks.length <= 0) {
-            res.send(results2);
+            res.status(201).send({ message: "สร้างโปรเจกต์เปล่าสำเร็จ" });
+            await connection.commit();
             return;
         }
 
         // get new taskIDs
         const sql3 = "SELECT taskID FROM Task ORDER BY createdAt DESC, taskID DESC LIMIT 1;";
-        const [results3] = await db.execute(sql3);
+        const [results3] = await connection.execute(sql3);
         // @ts-expect-error
         if (results3.length <= 0) {
-            return res.status(404).send('TODO: handle empty task table. No task found.');
+            return res.status(404).send({ message: 'TODO: handle empty task table. No task found.' });
         }
         // @ts-expect-error
         const latest_taskID = results3[0].taskID;
         const new_taskIDs = genMultipleNewID(latest_taskID, data.tasks.length);
+        // TODO: handle duplicate key
         console.log(new_taskIDs);
 
         // insert new tasks
@@ -155,14 +161,21 @@ router.post('/', async (req, res) => {
                 getBangkokTimestamp(new Date()), // basically sql NOW() in utc+7
                 x.team.teamID
             ]);
-        const [results4] = await db.query(sql4, [values])
+        const [results4] = await connection.query(sql4, [values])
 
-        res.send(results4);
+        res.status(201).send({ message: "สร้างโปรเจกต์พร้อม Task สำเร็จ" });
+        await connection.commit();
     } catch (err) {
+        await connection.rollback();
         console.error(err);
         console.log(new Date().toISOString());
         console.log("=============================================================");
-        res.status(500).send('Error querying the database');
+        res.status(500).send({
+            message: "Error updating Tasks via transaction.",
+            detail: "" + err
+        });
+    } finally {
+        connection.release();
     }
 });
 export default router;

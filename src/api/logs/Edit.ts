@@ -95,7 +95,7 @@ router.patch('/edit/marks/', async (req, res) => {
         console.error(new Date().toISOString());
         console.error("=============================================================");
         res.status(500).send({
-            message: "Error updating EditLogs markedDone to the database via transaction.",
+            message: "Error updating EditLogs markedDone via transaction.",
             detail: "" + err
         });
     } finally {
