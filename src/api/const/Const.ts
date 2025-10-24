@@ -8,6 +8,8 @@ router.get('/teams', async (req, res) => {
         res.send(results);
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
@@ -19,6 +21,8 @@ router.get('/taskStatuses', async (req, res) => {
         res.send(results);
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
@@ -30,6 +34,8 @@ router.get('/defaultTaskNames', async (req, res) => {
         res.send(results);
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });

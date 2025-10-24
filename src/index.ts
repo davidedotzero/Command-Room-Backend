@@ -24,6 +24,17 @@ app.use('/api/gen_ids/', genIdRouter);
 app.use('/api/logs/', logRouter);
 app.use('/api/taskusers/', taskuserRouter);
 
+// heartbeat query for keeping connection alive.
+setInterval(() => {
+    db.query('SELECT 1')
+        .then(() => {
+            console.log('Database connection is alive. ' + new Date().toISOString());
+        })
+        .catch(err => {
+            console.error('Database heartbeat query failed:', err);
+        });
+}, 120000);
+
 app.listen(PORT, () => {
     console.log('The application is listening '
         + 'on port http://localhost/' + PORT);
@@ -38,6 +49,8 @@ app.get('/api/ping', async (req, res) => {
         res.send("pong");
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
@@ -64,18 +77,21 @@ app.get('/api/verifyEmail/:email', async (req, res) => {
         }
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
 
 
-// TODO: only select userID and userName
 app.get('/api/getWorkers', async (req, res) => {
     try {
         const [results] = await db.query("SELECT userID, userName FROM User WHERE userID != 'USER-0000-000000' ORDER BY userID ASC");
         res.send(results);
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
@@ -92,6 +108,8 @@ app.get('/api/isProjectIDExists/:projectID', async (req, res) => {
     }
     catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
@@ -106,6 +124,8 @@ app.get("/api/getAvgHelpLeadDaysBeforeDeadline", async (req, res) => {
 
     } catch (err) {
         console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
         res.status(500).send('Error querying the database');
     }
 });
