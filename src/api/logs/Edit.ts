@@ -51,7 +51,7 @@ const router = express.Router();
 router.get('/edit/:taskID', async (req, res) => {
     try {
         const { taskID } = req.params;
-        const sql = "SELECT * FROM EditLog JOIN User on EditLog.userID = User.userID WHERE taskID = ? ORDER BY date DESC";
+        const sql = "SELECT * FROM EditLog JOIN User on EditLog.userID = User.userID WHERE taskID = ? ORDER BY markedDone ASC, date DESC";
         const [results] = await db.query(sql, [taskID]);
         res.send(results);
     } catch (err) {

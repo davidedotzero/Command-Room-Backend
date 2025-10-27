@@ -10,9 +10,13 @@ import logRouter from './api/logs/Edit.js';
 import taskuserRouter from './api/taskusers/TaskUsers.js'
 import { formatInTimeZone } from 'date-fns-tz';
 import { genMultipleNewID, genSingleNewID, genSingleNewShortID, getBangkokDate } from './util.js';
+import { toNodeHandler } from 'better-auth/node';
+import { auth } from './lib/auth.js';
 
 const app = express();
 const PORT: number = 8080;
+
+app.all('/api/auth/{*any}', toNodeHandler(auth));
 
 app.use(cors());
 app.use(express.json());
