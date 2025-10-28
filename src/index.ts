@@ -10,12 +10,20 @@ import logRouter from './api/logs/Edit.js';
 import taskuserRouter from './api/taskusers/TaskUsers.js'
 import { formatInTimeZone } from 'date-fns-tz';
 import { genMultipleNewID, genSingleNewID, genSingleNewShortID, getBangkokDate } from './util.js';
+import passport from 'passport';
+import jwt from 'jsonwebtoken';
+
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
 const PORT: number = 8080;
 
 app.use(cors());
 app.use(express.json());
+
+app.use(passport.initialize());
+import './passport.js';
 
 app.use('/api/const/', constRouter);
 app.use('/api/projects/', projectRouter);
@@ -35,6 +43,38 @@ setInterval(() => {
         });
 }, 120000);
 
+app.get('/api/auth/google', passport.authenticate('google', {
+    scope: ["profile", "email"],
+    session: false,
+    prompt: 'select_account'
+}));
+
+app.get('/api/auth/google/redirect', passport.authenticate('google', { session: false, failureRedirect: `${process.env.FRONTEND_URL}/login-failed`}), async (req, res) => {
+    console.log("======================================================");
+
+    // TODO: validate req
+
+    // @ts-expect-error
+    const email = req?.user?.emails![0].value;
+    const sql = "SELECT 1 FROM User WHERE email = ?";
+    const [results] = await db.query(sql, [email]);
+    // @ts-expect-error
+    if(results.length <= 0) {
+        res.redirect(`${process.env.FRONTEND_URL}/whoru`);
+        return;
+    }
+
+    const payload = {
+        // @ts-expect-error
+        id: req?.user?.id,
+        // @ts-expect-error
+        email: req?.user?.emails![0].value
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '120s' })
+    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
+});
+
 app.listen(PORT, () => {
     console.log('The application is listening '
         + 'on port http://localhost/' + PORT);
@@ -44,9 +84,33 @@ app.get('/', async (req, res) => {
     res.send('hello human!!! o/: ' + getBangkokDate(new Date()).replaceAll('-', '') + new Date().toString() + " / " + formatInTimeZone(new Date(), "Asia/Bangkok", "yyyy-MM-dd HH:mm:ss") + " / " + genSingleNewID("TASK-20251016-000069") + " / " + genSingleNewShortID("PROJECT-2025-000069") + " / " + genMultipleNewID("TASK-20251016-000069", 10).join(", "));
 });
 
-app.get('/api/ping', async (req, res) => {
+app.get('/api/ping', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         res.send("pong");
+    } catch (err) {
+        console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
+        res.status(500).send('Error querying the database');
+    }
+});
+
+app.get('/api/user/me', passport.authenticate('jwt', {session: false}), async (req, res) => {
+    try {
+        // @ts-expect-error
+        const email = req?.user?.email;
+        // TODO: validate email
+        const sql = "SELECT * FROM User WHERE email = ?";
+        const [results] = await db.query(sql, [email]);
+
+        // result.length <= 0 is always false for SELECT queries in mysql2 (returns empty array)
+        // @ts-expect-error
+        if (results.length > 0) {
+            // @ts-expect-error
+            res.status(200).send(results[0]);
+        } else {
+            res.status(404).send('User not found');
+        }
     } catch (err) {
         console.error(err);
         console.log(new Date().toISOString());
