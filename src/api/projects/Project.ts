@@ -1,9 +1,10 @@
 import express from 'express';
 import { db } from '../../db.js';
 import { genMultipleNewID, genSingleNewID, genSingleNewShortID, formatDateYYYY_MM_DD_Dashes, getBangkokDate, getBangkokTimestamp } from '../../util.js';
+import passport from 'passport';
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const [results] = await db.query("SELECT * FROM Project");
         res.send(results);
@@ -16,7 +17,7 @@ router.get('/', async (req, res) => {
 });
 
 
-router.get('/active/', async (req, res) => {
+router.get('/active/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const [results] = await db.query
             (`
@@ -36,7 +37,7 @@ router.get('/active/', async (req, res) => {
 });
 
 // TODO: change to /:projectID/name
-router.get('/name/:projectID', async (req, res) => {
+router.get('/name/:projectID', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const { projectID } = req.params;
         const sql = "SELECT projectName FROM Project WHERE projectID = ? LIMIT 1";
@@ -58,7 +59,7 @@ router.get('/name/:projectID', async (req, res) => {
 });
 
 // TODO: change to /:projectID/name
-router.patch('/name/:projectID', async (req, res) => {
+router.patch('/name/:projectID', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const { projectID } = req.params;
         const projectName = req.body;
@@ -79,7 +80,7 @@ router.patch('/name/:projectID', async (req, res) => {
 });
 
 // TODO: change to /:projectID/archive
-router.patch('/archive/:projectID', async (req, res) => {
+router.patch('/archive/:projectID', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const { projectID } = req.params;
         const isArchived = req.body.isArchived;
@@ -100,7 +101,7 @@ router.patch('/archive/:projectID', async (req, res) => {
 });
 
 // add new project with tasks
-router.post('/', async (req, res) => {
+router.post('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const connection = await db.getConnection();
 
     try {

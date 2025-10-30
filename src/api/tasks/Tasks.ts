@@ -3,6 +3,7 @@ import { db } from '../../db.js';
 import type { QueryResult } from 'mysql2';
 import { formatDateYYYY_MM_DD_Dashes, getBangkokDate, genSingleNewID } from '../../util.js';
 import { formatInTimeZone } from 'date-fns-tz';
+import passport from 'passport';
 const router = express.Router();
 
 // TODO: use JSON_ARRAYAGG later like this
@@ -41,7 +42,7 @@ const parseWorkerString = (results: QueryResult) => {
     });
 };
 
-router.get('/', async (req, res) => {
+router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const sql = `
             SELECT
@@ -92,7 +93,7 @@ router.get('/', async (req, res) => {
 });
 
 
-router.get('/pid/:projectID', async (req, res) => {
+router.get('/pid/:projectID', passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
         const { projectID } = req.params;
         const sql = `
@@ -146,7 +147,7 @@ router.get('/pid/:projectID', async (req, res) => {
 });
 
 
-router.get('/uid/:userID', async (req, res) => {
+router.get('/uid/:userID', passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
         const { userID } = req.params;
         const sql = `
@@ -198,9 +199,10 @@ router.get('/uid/:userID', async (req, res) => {
     }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
         const newTask = req.body;
+        console.log(newTask);
 
         if (!newTask) {
             return res.status(400).send('Data is required.');
@@ -241,45 +243,7 @@ router.post("/", async (req, res) => {
     }
 });
 
-// update
-// router.put("/", async (req, res) => {
-//     try {
-//         const updateData = req.body;
-//         if (!updateData) {
-//             return res.status(400).send('Data is required.');
-//         }
-//         if (Array.isArray(updateData)) {
-//             throw new Error("Only allow updating one record at a time");
-//         }
-//
-//         const taskID = updateData.taskID;
-//
-//         const sql = "UPDATE `Task` SET `taskName`=?,`deadline`=?,`taskStatusID`=?,`teamHelpID`=?,`helpReqAt`=?,`helpReqReason`=?,`logPreview`=?,`updatedAt`=NOW(),`teamID`=? WHERE taskID = ?"
-//         const params =
-//             [
-//                 updateData.taskName,
-//                 getBangkokDate(new Date(updateData.deadline)),
-//                 updateData.taskStatusID,
-//                 updateData.teamHelpID,
-//                 updateData.helpReqAt === null ? null : getBangkokDate(new Date(updateData.helpReqAt)),
-//                 updateData.helpReqReason,
-//                 updateData.logPreview,
-//                 updateData.teamID,
-//                 taskID
-//             ];
-//
-//         const [result] = await db.query(sql, params);
-//         res.send(result);
-//
-//     } catch (err) {
-//         console.error(err);
-//         console.log(new Date().toISOString());
-//         console.log("=============================================================");
-//         res.status(500).send('Error querying the database');
-//     }
-// });
-
-router.put("/", async (req, res) => {
+router.put("/", passport.authenticate("jwt", { session: false }), async (req, res) => {
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
