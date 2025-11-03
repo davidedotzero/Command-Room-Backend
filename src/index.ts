@@ -10,6 +10,9 @@ import logRouter from './api/logs/Edit.js';
 import taskuserRouter from './api/taskusers/TaskUsers.js'
 import { formatInTimeZone } from 'date-fns-tz';
 import { genMultipleNewID, genSingleNewID, genSingleNewShortID, getBangkokDate } from './util.js';
+import passport from './passport.js';
+import { pusher } from './pusher.js';
+import type { User } from './types.js';
 
 const app = express();
 const PORT: number = 8080;
@@ -17,11 +20,7 @@ const PORT: number = 8080;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false })); // needed this for pusher private route for some reason???
-
 app.use(passport.initialize());
-import './passport.js';
-import { pusher } from './pusher.js';
-import type { User } from './types.js';
 
 app.use('/api/const/', constRouter);
 app.use('/api/projects/', projectRouter);
@@ -86,19 +85,19 @@ app.get('/api/user/me', passport.authenticate('jwt', { session: false }), async 
 });
 
 
-        // @ts-expect-error
-        if (results.length > 0) {
-            // @ts-expect-error
-            res.status(200).send(results[0]);
-        } else {
-            res.status(404).send('User not found');
-        }
+// @ts-expect-error
+if (results.length > 0) {
+    // @ts-expect-error
+    res.status(200).send(results[0]);
+} else {
+    res.status(404).send('User not found');
+}
     } catch (err) {
-        console.error(err);
-        console.log(new Date().toISOString());
-        console.log("=============================================================");
-        res.status(500).send('Error querying the database');
-    }
+    console.error(err);
+    console.log(new Date().toISOString());
+    console.log("=============================================================");
+    res.status(500).send('Error querying the database');
+}
 });
 
 app.get('/api/noti/test', async (req, res) => {
