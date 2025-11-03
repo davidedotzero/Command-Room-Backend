@@ -60,21 +60,21 @@ app.get('/api/ping', async (req, res) => {
     }
 });
 
-
 app.get('/api/user/me', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
-        const { email } = req.params;
+        // @ts-expect-error
+        const email = req?.user?.email;
+        // TODO: validate email
         const sql = "SELECT * FROM User WHERE email = ?";
         const [results] = await db.query(sql, [email]);
-
 
         // result.length <= 0 is always false for SELECT queries in mysql2 (returns empty array)
         // @ts-expect-error
         if (results.length > 0) {
             // @ts-expect-error
-            res.send(results[0]);
+            res.status(200).send(results[0]);
         } else {
-            res.send(null); // Or res.status(404).send('User not found');
+            res.status(404).send('User not found');
         }
     } catch (err) {
         console.error(err);
@@ -84,20 +84,25 @@ app.get('/api/user/me', passport.authenticate('jwt', { session: false }), async 
     }
 });
 
+app.get('/api/user/:userID', passport.authenticate("jwt", { session: false }), async (req, res) => {
+    try {
+        const { userID } = req.params;
+        const sql = "SELECT * FROM User WHERE userID = ?";
+        const [results] = await db.query(sql, [userID]);
 
-// @ts-expect-error
-if (results.length > 0) {
-    // @ts-expect-error
-    res.status(200).send(results[0]);
-} else {
-    res.status(404).send('User not found');
-}
+        // @ts-expect-error
+        if (results.length > 0) {
+            // @ts-expect-error
+            res.status(200).send(results[0]);
+        } else {
+            res.status(404).send('User not found');
+        }
     } catch (err) {
-    console.error(err);
-    console.log(new Date().toISOString());
-    console.log("=============================================================");
-    res.status(500).send('Error querying the database');
-}
+        console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
+        res.status(500).send('Error querying the database');
+    }
 });
 
 app.get('/api/noti/test', async (req, res) => {
