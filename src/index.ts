@@ -120,6 +120,27 @@ app.get('/api/user/me', passport.authenticate('jwt', { session: false }), async 
     }
 });
 
+app.get('/api/user/:userID', passport.authenticate("jwt", { session: false }), async (req, res) => {
+    try {
+        const { userID } = req.params;
+        const sql = "SELECT * FROM User WHERE userID = ?";
+        const [results] = await db.query(sql, [userID]);
+
+        // @ts-expect-error
+        if (results.length > 0) {
+            // @ts-expect-error
+            res.status(200).send(results[0]);
+        } else {
+            res.status(404).send('User not found');
+        }
+    } catch (err) {
+        console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
+        res.status(500).send('Error querying the database');
+    }
+});
+
 // app.get('/api/test', async (req, res) => {
 //     const [results] = await db.query("select * from test");
 //     res.send(results);
