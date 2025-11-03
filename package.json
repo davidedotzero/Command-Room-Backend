@@ -13,6 +13,9 @@
   "license": "UNLICENSED",
   "description": "",
   "dependencies": {
+    "@types/passport": "^1.0.17",
+    "@types/passport-google-oauth20": "^2.0.17",
+    "@types/passport-jwt": "^4.0.1",
     "cors": "^2.8.5",
     "date-fns-tz": "^3.2.0",
     "date-time-format-timezone": "^1.0.22",

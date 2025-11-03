@@ -10,9 +10,9 @@ import logRouter from './api/logs/Edit.js';
 import taskuserRouter from './api/taskusers/TaskUsers.js'
 import { formatInTimeZone } from 'date-fns-tz';
 import { genMultipleNewID, genSingleNewID, genSingleNewShortID, getBangkokDate } from './util.js';
-import passport from './passport.js';
 import { pusher } from './pusher.js';
 import type { User } from './types.js';
+import passport from 'passport';
 
 const app = express();
 const PORT: number = 8080;
