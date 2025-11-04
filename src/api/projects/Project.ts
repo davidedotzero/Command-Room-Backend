@@ -48,13 +48,19 @@ router.get('/name/:projectID', passport.authenticate('jwt', { session: false }),
             // @ts-expect-error
             res.send(results[0]);
         } else {
-            res.status(404).send('Project not found');
+            res.status(404).send({
+                message: "Project not found",
+                detail: ""
+            });
         }
     } catch (err) {
         console.error(err);
         console.log(new Date().toISOString());
         console.log("=============================================================");
-        res.status(500).send('Error querying the database');
+        res.status(500).send({
+            message: "Error querying the database",
+            detail: "" + err
+        });
     }
 });
 
