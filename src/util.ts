@@ -1,4 +1,18 @@
 import { formatInTimeZone, toDate } from "date-fns-tz";
+import type { User } from "./types.js";
+import { db } from "./db.js";
+
+export async function getUserFromEmail(email: string): Promise<User | null> {
+    const sql = "SELECT * FROM User WHERE email = ?";
+    const [results] = await db.query(sql, [email]);
+
+    // @ts-expect-error
+    if (results.length <= 0) {
+        return null;
+    }
+    // @ts-expect-error
+    return results[0];
+}
 
 export function getBangkokDate(date: Date): string {
     return formatInTimeZone(date, "Asia/Bangkok", "yyyy-MM-dd");

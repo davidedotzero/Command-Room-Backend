@@ -7,11 +7,12 @@ import projectRouter from './api/projects/Project.js';
 import taskRouter from './api/tasks/Tasks.js';
 import genIdRouter from './api/gen_ids/GenID.js';
 import logRouter from './api/logs/Edit.js';
-import taskuserRouter from './api/taskusers/TaskUsers.js'
-import kpiRouter from './api/kpi/KPI.js'
+import taskuserRouter from './api/taskusers/TaskUsers.js';
+import kpiRouter from './api/kpi/KPI.js';
+import notificationRouter from './api/notification/Notification.js';
 
 import { formatInTimeZone } from 'date-fns-tz';
-import { genMultipleNewID, genSingleNewID, genSingleNewShortID, getBangkokDate } from './util.js';
+import { genMultipleNewID, genSingleNewID, genSingleNewShortID, getBangkokDate, getUserFromEmail } from './util.js';
 import { pusher } from './pusher.js';
 import type { User } from './types.js';
 import passport from 'passport';
@@ -23,10 +24,6 @@ const PORT: number = 8080;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false })); // needed this for pusher private route for some reason???
-app.use(passport.initialize());
-
-app.use(passport.initialize());
-import './passport.js';
 
 app.use(passport.initialize());
 import './passport.js';
@@ -38,6 +35,7 @@ app.use('/api/gen_ids/', genIdRouter);
 app.use('/api/logs/', logRouter);
 app.use('/api/taskusers/', taskuserRouter);
 app.use('/api/kpi/', kpiRouter);
+app.use('/api/noti/', notificationRouter);
 
 // heartbeat query for keeping connection alive.
 setInterval(() => {
@@ -145,24 +143,6 @@ app.get('/api/user/:userID', passport.authenticate("jwt", { session: false }), a
     }
 });
 
-app.get('/api/noti/test', async (req, res) => {
-    console.log("yay");
-    const response = await pusher.trigger("test-channel", "test-event", { message: "omkuyguma" });
-    res.status(200).send("yes");
-});
-
-app.post('/api/noti/testGU', passport.authenticate("jwt", { session: false }), async (req, res) => {
-    console.log("eiei");
-    const response = await pusher.trigger("private-kuy-channel-USER-0000-000001", "juanjuanjuan", { message: "GU AENG" });
-    res.status(200).send("kuykuykuy");
-});
-
-app.post('/api/noti/testPPAT', passport.authenticate("jwt", { session: false }), async (req, res) => {
-    console.log("eiei");
-    const response = await pusher.trigger("private-kuy-channel-USER-2025-000001", "juanjuanjuan", { message: "FROM PPAT" });
-    res.status(200).send("kuykuykuy");
-});
-
 app.post("/api/pusher/auth", passport.authenticate("jwt", { session: false }), async (req, res) => {
     console.log(req.body);
     const socketId = req.body.socket_id;
@@ -190,18 +170,6 @@ app.post("/api/pusher/auth", passport.authenticate("jwt", { session: false }), a
         return res.status(403).send('Forbidden: Unknown channel type');
     }
 });
-
-async function getUserFromEmail(email: string): Promise<User | null> {
-    const sql = "SELECT * FROM User WHERE email = ?";
-    const [results] = await db.query(sql, [email]);
-
-    // @ts-expect-error
-    if (results.length <= 0) {
-        return null;
-    }
-    // @ts-expect-error
-    return results[0];
-}
 
 // app.get('/api/test', async (req, res) => {
 //     const [results] = await db.query("select * from test");
