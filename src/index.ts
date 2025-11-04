@@ -12,17 +12,21 @@ import kpiRouter from './api/kpi/KPI.js'
 
 import { formatInTimeZone } from 'date-fns-tz';
 import { genMultipleNewID, genSingleNewID, genSingleNewShortID, getBangkokDate } from './util.js';
+import { pusher } from './pusher.js';
+import type { User } from './types.js';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
-
-import dotenv from 'dotenv';
-dotenv.config();
 
 const app = express();
 const PORT: number = 8080;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: false })); // needed this for pusher private route for some reason???
+app.use(passport.initialize());
+
+app.use(passport.initialize());
+import './passport.js';
 
 app.use(passport.initialize());
 import './passport.js';
@@ -140,6 +144,64 @@ app.get('/api/user/:userID', passport.authenticate("jwt", { session: false }), a
         res.status(500).send('Error querying the database');
     }
 });
+
+app.get('/api/noti/test', async (req, res) => {
+    console.log("yay");
+    const response = await pusher.trigger("test-channel", "test-event", { message: "omkuyguma" });
+    res.status(200).send("yes");
+});
+
+app.post('/api/noti/testGU', passport.authenticate("jwt", { session: false }), async (req, res) => {
+    console.log("eiei");
+    const response = await pusher.trigger("private-kuy-channel-USER-0000-000001", "juanjuanjuan", { message: "GU AENG" });
+    res.status(200).send("kuykuykuy");
+});
+
+app.post('/api/noti/testPPAT', passport.authenticate("jwt", { session: false }), async (req, res) => {
+    console.log("eiei");
+    const response = await pusher.trigger("private-kuy-channel-USER-2025-000001", "juanjuanjuan", { message: "FROM PPAT" });
+    res.status(200).send("kuykuykuy");
+});
+
+app.post("/api/pusher/auth", passport.authenticate("jwt", { session: false }), async (req, res) => {
+    console.log(req.body);
+    const socketId = req.body.socket_id;
+    const channel = req.body.channel_name;
+
+    // TODO: validate email
+    // @ts-expect-error
+    const email = req?.user?.email;
+    // TODO: validate user
+    const user = await getUserFromEmail(email);
+    console.log(user);
+
+    console.log("eh?");
+    if (channel.startsWith('private-kuy-channel-')) {
+        console.log("yea?");
+        const channelUserId = channel.replace('private-kuy-channel-', '');
+        if (user?.userID !== channelUserId) {
+            return res.status(403).send('Forbidden: private-user-XXX Channel Mismatch');
+        }
+
+        const authResponse = pusher.authorizeChannel(socketId, channel);
+        res.send(authResponse);
+    } else {
+        console.log("no?");
+        return res.status(403).send('Forbidden: Unknown channel type');
+    }
+});
+
+async function getUserFromEmail(email: string): Promise<User | null> {
+    const sql = "SELECT * FROM User WHERE email = ?";
+    const [results] = await db.query(sql, [email]);
+
+    // @ts-expect-error
+    if (results.length <= 0) {
+        return null;
+    }
+    // @ts-expect-error
+    return results[0];
+}
 
 // app.get('/api/test', async (req, res) => {
 //     const [results] = await db.query("select * from test");
