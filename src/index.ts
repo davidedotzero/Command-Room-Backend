@@ -15,6 +15,7 @@ import { genMultipleNewID, genSingleNewID, genSingleNewShortID, getBangkokDate }
 import { pusher } from './pusher.js';
 import type { User } from './types.js';
 import passport from 'passport';
+import jwt from 'jsonwebtoken';
 
 const app = express();
 const PORT: number = 8080;
