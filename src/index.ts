@@ -8,6 +8,8 @@ import taskRouter from './api/tasks/Tasks.js';
 import genIdRouter from './api/gen_ids/GenID.js';
 import logRouter from './api/logs/Edit.js';
 import taskuserRouter from './api/taskusers/TaskUsers.js'
+import kpiRouter from './api/kpi/KPI.js'
+
 import { formatInTimeZone } from 'date-fns-tz';
 import { genMultipleNewID, genSingleNewID, genSingleNewShortID, getBangkokDate } from './util.js';
 import { pusher } from './pusher.js';
@@ -22,12 +24,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false })); // needed this for pusher private route for some reason???
 app.use(passport.initialize());
 
+app.use(passport.initialize());
+import './passport.js';
+
 app.use('/api/const/', constRouter);
 app.use('/api/projects/', projectRouter);
 app.use('/api/tasks/', taskRouter);
 app.use('/api/gen_ids/', genIdRouter);
 app.use('/api/logs/', logRouter);
 app.use('/api/taskusers/', taskuserRouter);
+app.use('/api/kpi/', kpiRouter);
 
 // heartbeat query for keeping connection alive.
 setInterval(() => {
@@ -40,6 +46,36 @@ setInterval(() => {
         });
 }, 120000);
 
+app.get('/api/auth/google', passport.authenticate('google', {
+    scope: ["profile", "email"],
+    session: false,
+    prompt: 'select_account'
+}));
+
+app.get('/api/auth/google/redirect', passport.authenticate('google', { session: false, failureRedirect: `${process.env.FRONTEND_URL}/login-failed` }), async (req, res) => {
+    // TODO: validate req
+
+    // @ts-expect-error
+    const email = req?.user?.emails![0].value;
+    const sql = "SELECT 1 FROM User WHERE email = ?";
+    const [results] = await db.query(sql, [email]);
+    // @ts-expect-error
+    if (results.length <= 0) {
+        res.redirect(`${process.env.FRONTEND_URL}/whoru`);
+        return;
+    }
+
+    const payload = {
+        // @ts-expect-error
+        id: req?.user?.id,
+        // @ts-expect-error
+        email: req?.user?.emails![0].value
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '300s' })
+    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
+});
+
 app.listen(PORT, () => {
     console.log('The application is listening '
         + 'on port http://localhost/' + PORT);
@@ -49,7 +85,7 @@ app.get('/', async (req, res) => {
     res.send('hello human!!! o/: ' + getBangkokDate(new Date()).replaceAll('-', '') + new Date().toString() + " / " + formatInTimeZone(new Date(), "Asia/Bangkok", "yyyy-MM-dd HH:mm:ss") + " / " + genSingleNewID("TASK-20251016-000069") + " / " + genSingleNewShortID("PROJECT-2025-000069") + " / " + genMultipleNewID("TASK-20251016-000069", 10).join(", "));
 });
 
-app.get('/api/ping', async (req, res) => {
+app.get('/api/ping', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         res.send("pong");
     } catch (err) {
@@ -172,40 +208,6 @@ app.get('/api/getWorkers', passport.authenticate('jwt', { session: false }), asy
     try {
         const [results] = await db.query("SELECT userID, userName FROM User WHERE userID != 'USER-0000-000000' ORDER BY userID ASC");
         res.send(results);
-    } catch (err) {
-        console.error(err);
-        console.log(new Date().toISOString());
-        console.log("=============================================================");
-        res.status(500).send('Error querying the database');
-    }
-});
-
-app.get('/api/isProjectIDExists/:projectID', async (req, res) => {
-    try {
-        const projectID = req.params.projectID;
-        const sql = "select count(projectID) as isValid from Project where projectID = (?)";
-        const [results] = await db.query(sql, [projectID]);
-
-        // TODO: if results.length == 0
-        // @ts-expect-error
-        res.send(results[0]);
-    }
-    catch (err) {
-        console.error(err);
-        console.log(new Date().toISOString());
-        console.log("=============================================================");
-        res.status(500).send('Error querying the database');
-    }
-});
-
-app.get("/api/getAvgHelpLeadDaysBeforeDeadline", async (req, res) => {
-    try {
-        const sql = "select ROUND(AVG(DATEDIFF(deadline, DATE(NOW()))), 1) as avgHelpLeadDay from Task where Task.taskStatusID = 3 and Task.deadline > DATE(NOW())"
-
-        const [result] = await db.query(sql);
-        // @ts-expect-error
-        res.send(result[0]);
-
     } catch (err) {
         console.error(err);
         console.log(new Date().toISOString());

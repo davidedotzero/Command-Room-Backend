@@ -1,9 +1,10 @@
 import express from 'express';
 import { db } from '../../db.js';
 import { genSingleNewID } from '../../util.js';
+import passport from 'passport';
 const router = express.Router();
 
-router.get('/task', async (req, res) => {
+router.get('/task', passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
         const sql = "SELECT taskID FROM Task ORDER BY createdAt DESC, taskID DESC LIMIT 1";
         const [results] = await db.query(sql);
