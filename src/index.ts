@@ -17,6 +17,7 @@ import { pusher } from './pusher.js';
 import type { User } from './types.js';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
+import assert from 'assert';
 
 const app = express();
 const PORT: number = 8080;
@@ -145,31 +146,50 @@ app.get('/api/user/:userID', passport.authenticate("jwt", { session: false }), a
 });
 
 app.post("/api/pusher/auth", passport.authenticate("jwt", { session: false }), async (req, res) => {
-    console.log(req.body);
     const socketId = req.body.socket_id;
-    const channel = req.body.channel_name;
+    const channel: string = req.body.channel_name;
 
-    // TODO: validate email
-    // @ts-expect-error
-    const email = req?.user?.email;
-    // TODO: validate user
+    // @ts-expect-error just give me the fucking email
+    const email = req.user?.email;
+    if (!email) {
+        return res.status(401).send("Forbidden: No email associated with token.")
+    }
+
     const user = await getUserFromEmail(email);
-    console.log(user);
+    if (!user) {
+        return res.status(403).send("Forbidden: User with the email not found.")
+    }
 
-    console.log("eh?");
-    if (channel.startsWith('private-kuy-channel-')) {
-        console.log("yea?");
-        const channelUserId = channel.replace('private-kuy-channel-', '');
-        if (user?.userID !== channelUserId) {
-            return res.status(403).send('Forbidden: private-user-XXX Channel Mismatch');
-        }
+    const channelPrefixes = [
+        'private-user-',
+        'private-team-'
+    ];
 
-        const authResponse = pusher.authorizeChannel(socketId, channel);
-        res.send(authResponse);
-    } else {
+    const matchedPrefix = channelPrefixes.find(x => channel.startsWith(x));
+    if (!matchedPrefix) {
         console.log("no?");
         return res.status(403).send('Forbidden: Unknown channel type');
     }
+    const channelId = channel.substring(matchedPrefix.length);
+
+    let isAuthorized = false;
+    switch (matchedPrefix) {
+        case "private-user-":
+            isAuthorized = user.userID === channelId;
+            break;
+        case "private-team-":
+            isAuthorized = user.teamID === Number(channelId);
+            break;
+        default:
+            assert("unreachable");
+    }
+
+    if (!isAuthorized) {
+        return res.status(403).send(`Forbidden: Channel ${channel} Mismatch`);
+    }
+
+    const authResponse = pusher.authorizeChannel(socketId, channel);
+    res.send(authResponse);
 });
 
 // app.get('/api/test', async (req, res) => {

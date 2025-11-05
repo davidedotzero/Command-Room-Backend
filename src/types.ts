@@ -44,7 +44,7 @@ export interface User {
     userID: string;
     userName: string;
     email: string;
-    roleID: number;
+    teamID: number;
     isAdmin: boolean;
 }
 
