@@ -94,4 +94,44 @@ router.post('/teams', passport.authenticate("jwt", { session: false }), async (r
     }
 });
 
+router.get("/unseen-count/:userID", passport.authenticate("jwt", { session: false }), async (req, res) => {
+    try {
+        const { userID } = req.params;
+        const sql = "SELECT COUNT(*) as unseenCount FROM `NotificationRecipients` WHERE userID = ? and seen = FALSE;";
+        const [result] = await db.query(sql, userID);
+
+        // @ts-expect-error result is a fucking array and i want the first one i dont care
+        res.status(200).send(result[0]);
+    } catch (err) {
+        console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
+        res.status(500).send({
+            message: "Error querying the database.",
+            detail: "" + err
+        });
+    }
+});
+
+// SELECT COUNT(*) as unseenCount FROM `NotificationRecipients` WHERE userID = "USER-0000-000001" and seen = FALSE;
+// UPDATE NotificationRecipients SET seen = TRUE WHERE userID = "USER-0000-000001" and seen = FALSE;
+
+router.patch("/mark-seen/:userID", passport.authenticate("jwt", { session: false }), async (req, res) => {
+    try {
+        const { userID } = req.params;
+        const sql = "UPDATE NotificationRecipients SET seen = TRUE WHERE userID = ? and seen = FALSE";
+        const [result] = await db.query(sql, userID);
+
+        res.status(201).send({ message: "อัปเดตแจ้งเตือน user นี้ว่าอ่านแล้ว ok" });
+    } catch (err) {
+        console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
+        res.status(500).send({
+            message: "Error querying the database.",
+            detail: "" + err
+        });
+    }
+})
+
 export default router;
