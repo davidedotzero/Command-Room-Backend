@@ -1,6 +1,7 @@
-// TODO: make all this sheesh match database schema
-
-// TODO: make this id+name ????
+export interface UserUnseenCount {
+    userID: string,
+    unseenCount: number
+};
 
 // TODO: will change this when i know what fields are supposed to be in projectTask
 // TODO: add preview log field

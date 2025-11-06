@@ -2,6 +2,15 @@ import { formatInTimeZone, toDate } from "date-fns-tz";
 import type { User } from "./types.js";
 import { db } from "./db.js";
 
+export function chunkArray<T>(array: Array<T>, chunkSize: number): Array<Array<T>> {
+    let ret = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+        let chunk = array.slice(i, i + chunkSize);
+        ret.push([...chunk]);
+    }
+    return ret;
+}
+
 export async function getUserFromEmail(email: string): Promise<User | null> {
     const sql = "SELECT * FROM User WHERE email = ?";
     const [results] = await db.query(sql, [email]);

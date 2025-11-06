@@ -2,7 +2,9 @@ import express from 'express';
 import { db } from '../../db.js';
 import passport from 'passport';
 import { pusher } from '../../pusher.js';
-import { getUserFromEmail } from '../../util.js';
+import { chunkArray, getUserFromEmail } from '../../util.js';
+import type { UserUnseenCount } from '../../types.js';
+import { updateUserUnseenCount } from './NotificationService.js';
 const router = express.Router();
 
 router.post('/all', passport.authenticate("jwt", { session: false }), async (req, res) => {
@@ -35,6 +37,9 @@ router.post('/all', passport.authenticate("jwt", { session: false }), async (req
         res.status(200).send({ message: "Channel notify-all sent." });
 
         await connection.commit();
+
+        // @ts-expect-error allUserIds is an array so just FUCKING CAST IT BITCH
+        updateUserUnseenCount(allUserIds as Array<string>);
     } catch (err) {
         await connection.rollback();
         console.error(err);
@@ -115,6 +120,7 @@ router.get("/unseen-count/:userID", passport.authenticate("jwt", { session: fals
 
 // SELECT COUNT(*) as unseenCount FROM `NotificationRecipients` WHERE userID = "USER-0000-000001" and seen = FALSE;
 // UPDATE NotificationRecipients SET seen = TRUE WHERE userID = "USER-0000-000001" and seen = FALSE;
+// SELECT userID, COUNT(*) as unseenCount FROM `NotificationRecipients` where userID in ("USER-0000-000001", "USER-2025-000001") and seen = FALSE group by userID;
 
 router.patch("/mark-seen/:userID", passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
@@ -132,6 +138,6 @@ router.patch("/mark-seen/:userID", passport.authenticate("jwt", { session: false
             detail: "" + err
         });
     }
-})
+});
 
 export default router;
