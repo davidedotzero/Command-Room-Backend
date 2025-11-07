@@ -1,3 +1,4 @@
+import { db } from "../../db.js";
 import { pusher } from "../../pusher.js";
 import type { UserUnseenCount } from "../../types.js";
 import { chunkArray } from "../../util.js";
@@ -13,7 +14,7 @@ export async function updateUserUnseenCount(userIds: Array<string>) {
         }
 
         const sql = "SELECT userID, COUNT(*) as unseenCount FROM `NotificationRecipients` where userID in (?) and seen = FALSE group by userID;"
-        // @ts-expect-error
+        // @ts-expect-error 
         const [result] = await db.query(sql, [userIds.map(x => x.userID)]);
 
         const MAX_TRIGGER_BATCH_SIZE = 10;

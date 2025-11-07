@@ -5,7 +5,13 @@ import { pusher } from '../../pusher.js';
 import { chunkArray, getUserFromEmail } from '../../util.js';
 import type { UserUnseenCount } from '../../types.js';
 import { updateUserUnseenCount } from './NotificationService.js';
+import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 const router = express.Router();
+
+// TODO: abstract this sheesh
+interface RowCount extends RowDataPacket {
+    total: number;
+}
 
 router.post('/all', passport.authenticate("jwt", { session: false }), async (req, res) => {
     const connection = await db.getConnection();
@@ -85,6 +91,9 @@ router.post('/teams', passport.authenticate("jwt", { session: false }), async (r
         res.status(200).send({ message: `Channel private-team-${data.teamID} sent.` });
 
         await connection.commit();
+
+        // @ts-expect-error teamUserIds is an array so just FUCKING CAST IT BITCH
+        updateUserUnseenCount(teamUserIds as Array<string>);
     } catch (err) {
         await connection.rollback();
         console.error(err);
@@ -139,5 +148,173 @@ router.patch("/mark-seen/:userID", passport.authenticate("jwt", { session: false
         });
     }
 });
+
+router.get("/user/:userID", passport.authenticate("jwt", { session: false }), async (req, res) => {
+    try {
+        const { userID } = req.params;
+        const sql = `
+            (SELECT  
+                NotificationRecipients.notificationID,
+                NotificationRecipients.seen,
+                NotificationRecipients.visited,
+                Notification.senderID,
+                User.userName as senderName,
+                User.email as senderEmail,
+                User.teamID as senderTeamID,
+                Team.teamName as senderTeamName,
+                Notification.notificationTypeID,
+                Notification.message,
+                Notification.linkTargetID,
+                Notification.createdAt
+            FROM NotificationRecipients 
+            join Notification on NotificationRecipients.notificationID = Notification.notificationID 
+            join User on Notification.senderID = User.userID
+            join Team on User.teamID = Team.teamID
+            where NotificationRecipients.userID = ? and NotificationRecipients.deleted = FALSE and Notification.createdAt >= CURDATE())
+
+            union all 
+
+            (SELECT  
+                NotificationRecipients.notificationID,
+                NotificationRecipients.seen,
+                NotificationRecipients.visited,
+                Notification.senderID,
+                User.userName as senderName,
+                User.email as senderEmail,
+                User.teamID as senderTeamID,
+                Team.teamName as senderTeamName,
+                Notification.notificationTypeID,
+                Notification.message,
+                Notification.linkTargetID,
+                Notification.createdAt
+            FROM NotificationRecipients 
+            join Notification on NotificationRecipients.notificationID = Notification.notificationID 
+            join User on Notification.senderID = User.userID
+            join Team on User.teamID = Team.teamID
+            where NotificationRecipients.userID = ? and NotificationRecipients.deleted = FALSE and Notification.createdAt < CURDATE()
+            order by Notification.createdAt DESC
+            limit 10
+            offset 0)
+
+            order by createdAt DESC;
+        `;
+        const [result] = await db.query(sql, [userID, userID]);
+
+        res.status(200).send(result);
+    } catch (err) {
+        console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
+        res.status(500).send({
+            message: "Error querying the database.",
+            detail: "" + err
+        });
+    };
+});
+
+router.get("/user/:userID/page/:pageNumber", passport.authenticate("jwt", { session: false }), async (req, res) => {
+    try {
+        const PAGE_SIZE = 10;
+        const { userID, pageNumber } = req.params;
+        const page = parseInt(pageNumber as string || '1', 10);
+        const offset = (page - 1) * PAGE_SIZE;
+
+        const noti_sql = `
+            SELECT  
+                NotificationRecipients.notificationID,
+                NotificationRecipients.seen,
+                NotificationRecipients.visited,
+                Notification.senderID,
+                User.userName as senderName,
+                User.email as senderEmail,
+                User.teamID as senderTeamID,
+                Team.teamName as senderTeamName,
+                Notification.notificationTypeID,
+                Notification.message,
+                Notification.linkTargetID,
+                Notification.createdAt
+            FROM NotificationRecipients 
+            JOIN Notification on NotificationRecipients.notificationID = Notification.notificationID 
+            JOIN User on Notification.senderID = User.userID
+            JOIN Team on User.teamID = Team.teamID
+            WHERE NotificationRecipients.userID = ? and NotificationRecipients.deleted = FALSE and Notification.createdAt < CURDATE()
+            ORDER BY Notification.createdAt DESC
+            LIMIT ?
+            OFFSET ?;
+        `;
+
+        const count_sql = `
+            SELECT COUNT(*) as total 
+            FROM NotificationRecipients 
+            JOIN Notification on NotificationRecipients.notificationID = Notification.notificationID 
+            WHERE NotificationRecipients.userID = ? and NotificationRecipients.deleted = FALSE and Notification.createdAt < CURDATE() 
+        `;
+
+        const [[notis], [rowCount]] = await Promise.all(
+            [
+                db.query(noti_sql, [userID, PAGE_SIZE, offset]),
+                db.query<RowCount[]>(count_sql, userID)
+            ]
+        )
+
+        // @ts-expect-error i have a guard clause around rowCount. IT. FUCKING. WORKS.
+        const totalCount = (rowCount && rowCount.length > 0) ? rowCount[0].total : 0;
+        const hasMorePage = (page * PAGE_SIZE) < totalCount;
+
+        res.status(200).send({
+            notifications: notis,
+            hasMorePage: hasMorePage
+        });
+    } catch (err) {
+        console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
+        res.status(500).send({
+            message: "Error querying the database.",
+            detail: "" + err
+        });
+    };
+});
+
+/*
+SELECT * FROM NotificationRecipients 
+join Notification on NotificationRecipients.notificationID = Notification.notificationID 
+where NotificationRecipients.userID = ? and NotificationRecipients.deleted = FALSE
+order by Notification.createdAt DESC;
+
+SELECT * FROM NotificationRecipients 
+join Notification on NotificationRecipients.notificationID = Notification.notificationID 
+where NotificationRecipients.userID = ? and NotificationRecipients.deleted = FALSE and DATE(Notification.createdAt) = CURDATE()
+order by Notification.createdAt DESC;
+
+SELECT * FROM NotificationRecipients 
+join Notification on NotificationRecipients.notificationID = Notification.notificationID 
+where NotificationRecipients.userID = ? and NotificationRecipients.deleted = FALSE and DATE(Notification.createdAt) != CURDATE()
+order by Notification.createdAt DESC
+limit 10;
+
+
+SELECT  
+    NotificationRecipients.notificationID,
+    NotificationRecipients.seen,
+    NotificationRecipients.visited,
+    Notification.senderID,
+    User.userName as senderName,
+    User.email as senderEmail,
+    User.teamID as senderTeamID,
+    Team.teamName as senderTeamName,
+    Notification.notificationTypeID,
+    Notification.message,
+    Notification.linkTargetID,
+    Notification.createdAt
+FROM NotificationRecipients 
+join Notification on NotificationRecipients.notificationID = Notification.notificationID 
+join User on Notification.senderID = User.userID
+join Team on User.teamID = Team.teamID
+where NotificationRecipients.userID = ? and NotificationRecipients.deleted = FALSE
+order by Notification.createdAt DESC;
+
+
+*/
 
 export default router;
