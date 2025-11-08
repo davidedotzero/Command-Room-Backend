@@ -4,7 +4,7 @@ import passport from 'passport';
 import { pusher } from '../../pusher.js';
 import { chunkArray, getUserFromEmail } from '../../util.js';
 import type { UserUnseenCount } from '../../types.js';
-import { updateUserUnseenCount } from './NotificationService.js';
+import { updateUserNotification, updateUserUnseenCount } from './NotificationService.js';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 const router = express.Router();
 
@@ -39,13 +39,20 @@ router.post('/all', passport.authenticate("jwt", { session: false }), async (req
         const sql2 = "INSERT INTO `NotificationRecipients`(`notificationID`, `userID`) VALUES ?";
         const [result2] = await connection.query(sql2, [sql2_values]);
 
-        const response = await pusher.trigger("notify-all", "notify-all-event", { message: data.message });
-        res.status(200).send({ message: "Channel notify-all sent." });
+        // TODO: proper err handling
+        const response = await Promise.all(
+            [
+                pusher.trigger("notify-all", "notify-all-toast-event", { message: data.message }),
+            ]
+        );
+        res.status(200).send({ message: "Channel notify-all sent. @notify-all-toast-event, @notify-all-notiCard-event" });
 
         await connection.commit();
 
         // @ts-expect-error allUserIds is an array so just FUCKING CAST IT BITCH
         updateUserUnseenCount(allUserIds as Array<string>);
+        // @ts-expect-error allUserIds is an array so just FUCKING CAST IT BITCH
+        updateUserNotification(allUserIds as Array<string>, insertedNotiId);
     } catch (err) {
         await connection.rollback();
         console.error(err);
@@ -87,13 +94,15 @@ router.post('/teams', passport.authenticate("jwt", { session: false }), async (r
         const sql2 = "INSERT INTO `NotificationRecipients`(`notificationID`, `userID`) VALUES ?";
         const [result2] = await connection.query(sql2, [sql2_values]);
 
-        const response = await pusher.trigger(`private-team-${data.teamID}`, "private-team-event", { message: data.message });
-        res.status(200).send({ message: `Channel private-team-${data.teamID} sent.` });
+        const response = await pusher.trigger(`private-team-${data.teamID}`, "private-team-toast-event", { message: data.message });
+        res.status(200).send({ message: `Channel private-team-${data.teamID} sent. @private-team-toast-event` });
 
         await connection.commit();
 
         // @ts-expect-error teamUserIds is an array so just FUCKING CAST IT BITCH
         updateUserUnseenCount(teamUserIds as Array<string>);
+        // @ts-expect-error allUserIds is an array so just FUCKING CAST IT BITCH
+        updateUserNotification(teamUserIds as Array<string>, insertedNotiId);
     } catch (err) {
         await connection.rollback();
         console.error(err);

@@ -3,6 +3,23 @@ export interface UserUnseenCount {
     unseenCount: number
 };
 
+export interface NotificationDetailed {
+    notificationID: number;
+    seen: boolean;
+    visited: boolean;
+    senderID: string;
+    senderName: string;
+    senderEmail: string;
+    senderTeamID: number;
+    senderTeamName: string;
+    receiverID: string;
+    receiverName: string;
+    notificationTypeID: number;
+    message: string;
+    linkTargetID: string | null;
+    createdAt: Date;
+}
+
 // TODO: will change this when i know what fields are supposed to be in projectTask
 // TODO: add preview log field
 export interface Task {
