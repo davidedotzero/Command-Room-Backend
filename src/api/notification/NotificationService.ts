@@ -1,3 +1,4 @@
+import type { PoolConnection } from "mysql2/promise";
 import { db } from "../../db.js";
 import { pusher } from "../../pusher.js";
 import type { NotificationDetailed, UserUnseenCount } from "../../types.js";
@@ -98,3 +99,38 @@ export async function updateUserNotification(userIds: Array<string>, notiId: num
         console.log(err);
     }
 }
+
+export async function getTeamIdsInProject(projectID: string, includeHelpTeam: boolean) {
+    console.log("yark yead heeie");
+    try {
+        const sql = `
+            (select DISTINCT(teamID) from Task where projectID = ?)
+            union
+            (select DISTINCT(teamHelpID) from Task where projectID = ? and teamHelpID is not NULL and ? = TRUE);
+        `;
+        const [result] = await db.query(sql, [projectID, projectID, includeHelpTeam]);
+        // @ts-expect-error result IS A FUCKING ARRAY FUCK YOU
+        const yee = result.map(x => x.teamID);
+        console.log(yee);
+
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+export async function createNotification(data: any, connection: PoolConnection, recipientIDsQuery: string, recipientIDsQueryParams: Array<any>) {
+    const sql = "INSERT INTO `Notification`(`senderID`, `notificationTypeID`, `message`, `linkTargetID`, `createdAt`) VALUES (?, ?, ?, ?, NOW())";
+    const [result] = await connection.query(sql, [data.senderID, data.notificationTypeID, data.message, data.linkTargetID]);
+
+    // @ts-expect-error insertId EXISTS BRO
+    const insertedNotiId = result.insertId;
+    const [userIds] = await connection.query(recipientIDsQuery, recipientIDsQueryParams);
+
+    // @ts-expect-error allUserIds is an array so map frickin exists bruh
+    const sql2_values = userIds.map(x => [insertedNotiId, x.userID]);
+    const sql2 = "INSERT INTO `NotificationRecipients`(`notificationID`, `userID`) VALUES ?";
+    const [result2] = await connection.query(sql2, [sql2_values]);
+
+    return { insertedNotiId, userIds, result2 };
+}
+
