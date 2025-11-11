@@ -138,4 +138,5 @@ router.post('/', passport.authenticate('jwt', { session: false }), async (req, r
         connection.release();
     }
 });
+
 export default router;

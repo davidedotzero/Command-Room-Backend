@@ -100,18 +100,50 @@ export async function updateUserNotification(userIds: Array<string>, notiId: num
     }
 }
 
-export async function getTeamIdsInProject(projectID: string, includeHelpTeam: boolean) {
-    console.log("yark yead heeie");
+export async function toastUser(userIds: string[], message: string) {
+    try {
+        const response = await Promise.all(
+            (userIds.map((x: string) => {
+                return pusher.trigger(`private-user-${x}`, "private-user-toast-event", { message: message });
+            }))
+        );
+        return response;
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+export async function getUserIDsInProject(projectID: string, includeHelpTeam: boolean) {
     try {
         const sql = `
-            (select DISTINCT(teamID) from Task where projectID = ?)
+            SELECT User.userID FROM User 
+            JOIN (
+                    ( SELECT DISTINCT(teamID) FROM Task WHERE projectID = ? )
+                    union
+                    ( SELECT DISTINCT(teamHelpID) AS teamID FROM Task WHERE projectID = ? AND teamHelpID IS NOT NULL AND ? = TRUE )
+            ) AS ProjectTeams ON User.teamID = ProjectTeams.teamID
+            WHERE User.userID != "USER-0000-000000";
+        `;
+        const [result] = await db.query(sql, [projectID, projectID, includeHelpTeam]);
+        // const yee = result.map(x => x.userID);
+        // console.log(yee);
+
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+export async function getTeamIDsInProject(projectID: string, includeHelpTeam: boolean) {
+    try {
+        const sql = `
+            ( SELECT DISTINCT(teamID) FROM Task WHERE projectID = ? )
             union
-            (select DISTINCT(teamHelpID) from Task where projectID = ? and teamHelpID is not NULL and ? = TRUE);
+            ( SELECT DISTINCT(teamHelpID) AS teamID FROM Task WHERE projectID = ? AND teamHelpID IS NOT NULL AND ? = TRUE )
         `;
         const [result] = await db.query(sql, [projectID, projectID, includeHelpTeam]);
         // @ts-expect-error result IS A FUCKING ARRAY FUCK YOU
         const yee = result.map(x => x.teamID);
-        console.log(yee);
+        return yee;
 
     } catch (err) {
         console.log(err);

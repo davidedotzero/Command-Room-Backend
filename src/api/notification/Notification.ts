@@ -4,7 +4,7 @@ import passport from 'passport';
 import { pusher } from '../../pusher.js';
 import { chunkArray, getUserFromEmail } from '../../util.js';
 import type { UserUnseenCount } from '../../types.js';
-import { createNotification, updateUserNotification, updateUserUnseenCount } from './NotificationService.js';
+import { createNotification, getTeamIDsInProject, toastUser, updateUserNotification, updateUserUnseenCount } from './NotificationService.js';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 const router = express.Router();
 
@@ -66,21 +66,109 @@ router.post('/teams', passport.authenticate("jwt", { session: false }), async (r
         if (!data.notificationTypeID) { return res.status(400).send({ message: 'Data: notificationTypeID is required' }); }
         if (!data.message) { return res.status(400).send({ message: 'Data: message is required' }); }
         if (data.linkTargetID === undefined) { return res.status(400).send({ message: 'Data: linkTargetID is required' }); }
-        if (!data.teamIDs) { return res.status(400).send({ message: 'Data: teamIDs is required' }); }
+        if (!data.teamIDs || data.teamIDs.length <= 0) { return res.status(400).send({ message: 'Data: teamIDs is required' }); }
 
 
-        const userIds_sql = "SELECT userID FROM User WHERE userID != \"USER-0000-000000\" and teamID in ?";
-        const { insertedNotiId, userIds } = await createNotification(data, connection, userIds_sql, [[data.teamIDs]]);
+        const userIds_sql = `SELECT userID FROM User WHERE userID != "USER-0000-000000" and userID != ? and teamID in ?`;
+        const { insertedNotiId, userIds } = await createNotification(data, connection, userIds_sql, [data.senderID, [data.teamIDs]]);
 
         await connection.commit();
 
-        const response = await pusher.trigger(`private-team-${data.teamID}`, "private-team-toast-event", { message: data.message });
-        // @ts-expect-error teamUserIds is an array so just FUCKING CAST IT BITCH
-        updateUserUnseenCount(userIds as Array<string>);
-        // @ts-expect-error allUserIds is an array so just FUCKING CAST IT BITCH
-        updateUserNotification(userIds as Array<string>, insertedNotiId);
+        toastUser((userIds as unknown) as string[], data.message);
+        updateUserUnseenCount((userIds as unknown) as string[]);
+        updateUserNotification((userIds as unknown) as string[], insertedNotiId);
 
-        res.status(200).send({ message: `Channel private-team-${data.teamID} sent. @private-team-toast-event` });
+        res.status(200).send({ message: `Channel private-team-${data.teamIDs} sent. @private-team-toast-event` });
+    } catch (err) {
+        await connection.rollback();
+        console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
+        res.status(500).send({
+            message: "Error sending notifications in \"notify-all\" channel.",
+            detail: "" + err
+        });
+    } finally {
+        connection.release();
+    }
+});
+
+router.post('/teams/:projectID', passport.authenticate("jwt", { session: false }), async (req, res) => {
+    const connection = await db.getConnection();
+
+    try {
+        await connection.beginTransaction();
+        const data = req.body;
+        const { projectID } = req.params;
+        if (!data) {
+            return res.status(400).send({ message: 'Data is required' });
+        }
+        if (!data.senderID) { return res.status(400).send({ message: 'Data: senderID is required' }); }
+        if (!data.notificationTypeID) { return res.status(400).send({ message: 'Data: notificationTypeID is required' }); }
+        if (!data.message) { return res.status(400).send({ message: 'Data: message is required' }); }
+        if (data.linkTargetID === undefined) { return res.status(400).send({ message: 'Data: linkTargetID is required' }); }
+
+        const userIds_sql = `
+            SELECT userID FROM User WHERE userID != "USER-0000-000000" and userID != ? and teamID in
+            (
+                (select DISTINCT(teamID) from Task where projectID = ?)
+                union
+                (select DISTINCT(teamHelpID) from Task where projectID = ? and teamHelpID is not NULL)
+            );
+        `;
+        const { insertedNotiId, userIds } = await createNotification(data, connection, userIds_sql, [data.senderID, projectID, projectID]);
+
+        const teamIDs = await getTeamIDsInProject(projectID, true);
+        console.log(teamIDs);
+
+        await connection.commit();
+
+        toastUser((userIds as unknown) as string[], data.message);
+        updateUserUnseenCount((userIds as unknown) as string[]);
+        updateUserNotification((userIds as unknown) as string[], insertedNotiId);
+
+        res.status(200).send({ message: `Channel private-team-${data.teamIDs} sent. @private-team-toast-event` });
+    } catch (err) {
+        await connection.rollback();
+        console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
+        res.status(500).send({
+            message: "Error sending notifications in \"notify-all\" channel.",
+            detail: "" + err
+        });
+    } finally {
+        connection.release();
+    }
+});
+
+router.post('/users', passport.authenticate("jwt", { session: false }), async (req, res) => {
+    const connection = await db.getConnection();
+
+    try {
+        await connection.beginTransaction();
+        const data = req.body;
+        if (!data) {
+            return res.status(400).send({ message: 'Data is required' });
+        }
+        if (!data.senderID) { return res.status(400).send({ message: 'Data: senderID is required' }); }
+        if (!data.notificationTypeID) { return res.status(400).send({ message: 'Data: notificationTypeID is required' }); }
+        if (!data.message) { return res.status(400).send({ message: 'Data: message is required' }); }
+        if (data.linkTargetID === undefined) { return res.status(400).send({ message: 'Data: linkTargetID is required' }); }
+        if (!data.userIDs || data.userIDs.length <= 0) { return res.status(400).send({ message: 'Data: userIDs is required' }); }
+
+
+        // TODO: THIS IS SO BADDDDDDDD. WE ALREADY HAVE USERIDS SO JUST PLUG IT IN CREATENOTIFICATION BUT THAT REQUIRES A LOT OF REFACTORING SO THIS WILL DO FOR NOW ;(
+        const userIds_sql = `SELECT userID FROM User WHERE userID != "USER-0000-000000" and userID != ? and userID in ?`;
+        const { insertedNotiId, userIds } = await createNotification(data, connection, userIds_sql, [data.senderID, [data.userIDs]]);
+
+        await connection.commit();
+
+        toastUser((userIds as unknown) as string[], data.message);
+        updateUserUnseenCount((userIds as unknown) as string[]);
+        updateUserNotification((userIds as unknown) as string[], insertedNotiId);
+
+        res.status(200).send({ message: `Channel private-user sent. @private-user-toast-event` });
     } catch (err) {
         await connection.rollback();
         console.error(err);
