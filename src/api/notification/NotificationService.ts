@@ -103,7 +103,7 @@ export async function updateUserNotification(userIds: Array<string>, notiId: num
 export async function toastUser(userIds: string[], message: string) {
     try {
         const response = await Promise.all(
-            (userIds.map((x: string) => {
+            (userIds.map((x) => {
                 return pusher.trigger(`private-user-${x}`, "private-user-toast-event", { message: message });
             }))
         );

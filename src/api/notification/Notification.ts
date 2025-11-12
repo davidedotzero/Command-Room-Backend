@@ -74,7 +74,9 @@ router.post('/teams', passport.authenticate("jwt", { session: false }), async (r
 
         await connection.commit();
 
-        toastUser((userIds as unknown) as string[], data.message);
+
+        // TODO: i dont fucking care i dont wanna make a fucking type
+        toastUser((userIds as Array<any>).map(x => x.userID), data.message);
         updateUserUnseenCount((userIds as unknown) as string[]);
         updateUserNotification((userIds as unknown) as string[], insertedNotiId);
 
@@ -122,7 +124,8 @@ router.post('/teams/:projectID', passport.authenticate("jwt", { session: false }
 
         await connection.commit();
 
-        toastUser((userIds as unknown) as string[], data.message);
+        // TODO: i dont fucking care i dont wanna make a fucking type
+        toastUser((userIds as Array<any>).map(x => x.userID), data.message);
         updateUserUnseenCount((userIds as unknown) as string[]);
         updateUserNotification((userIds as unknown) as string[], insertedNotiId);
 
@@ -163,7 +166,8 @@ router.post('/users', passport.authenticate("jwt", { session: false }), async (r
 
         await connection.commit();
 
-        toastUser((userIds as unknown) as string[], data.message);
+        // TODO: i dont fucking care i dont wanna make a fucking type
+        toastUser((userIds as Array<any>).map(x => x.userID), data.message);
         updateUserUnseenCount((userIds as unknown) as string[]);
         updateUserNotification((userIds as unknown) as string[], insertedNotiId);
 
