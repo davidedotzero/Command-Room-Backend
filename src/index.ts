@@ -167,7 +167,6 @@ app.post("/api/pusher/auth", passport.authenticate("jwt", { session: false }), a
 
     const matchedPrefix = channelPrefixes.find(x => channel.startsWith(x));
     if (!matchedPrefix) {
-        console.log("no?");
         return res.status(403).send('Forbidden: Unknown channel type');
     }
     const channelId = channel.substring(matchedPrefix.length);

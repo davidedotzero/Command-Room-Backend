@@ -119,7 +119,6 @@ router.post('/teams/:projectID', passport.authenticate("jwt", { session: false }
         const { insertedNotiId, userIds } = await createNotification(data, connection, userIds_sql, [data.senderID, projectID, projectID]);
 
         const teamIDs = await getTeamIDsInProject(projectID, true);
-        console.log(teamIDs);
 
         await connection.commit();
 

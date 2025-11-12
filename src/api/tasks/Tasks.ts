@@ -202,15 +202,10 @@ router.get('/uid/:userID', passport.authenticate("jwt", { session: false }), asy
 router.post("/", passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
         const newTask = req.body;
-        console.log(newTask);
 
         if (!newTask) {
             return res.status(400).send('Data is required.');
         }
-
-        console.log(newTask.deadline);
-        console.log(new Date(newTask.deadline));
-        console.log(getBangkokDate(new Date(newTask.deadline)));
 
         if (!Array.isArray(newTask)) {
             const sql = "INSERT INTO `Task`(`taskID`, `projectID`, `taskName`, `deadline`, `taskStatusID`, `teamHelpID`, `helpReqAt`, `helpReqReason`, `logPreview`, `createdAt`, `updatedAt`, `teamID`) VALUES (?,?,?,?,?,?,?,?,?,NOW(),?,?)"
@@ -263,13 +258,11 @@ router.put("/", passport.authenticate("jwt", { session: false }), async (req, re
         }
 
         const taskID = data.updateTask.taskID;
-        console.log(data);
 
         addNewTaskUsers: {
             if (!Array.isArray(data.toAddUsers) || data.toAddUsers.length <= 0) break addNewTaskUsers;
             // @ts-expect-error
             const newUserValues = data.toAddUsers.map(x => [taskID, x.userID]);
-            console.log(newUserValues);
             const sql = "INSERT INTO `TaskUser`(`taskID`, `userID`) VALUES ?"
             const [result] = await db.query(sql, [newUserValues]);
         }

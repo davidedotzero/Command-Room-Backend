@@ -35,7 +35,6 @@ export async function createProjectWithTasks(data: any, connection: PoolConnecti
     const latest_taskID = results3[0].taskID;
     const new_taskIDs = genMultipleNewID(latest_taskID, data.tasks.length);
     // TODO: handle duplicate key
-    console.log(new_taskIDs);
 
     // insert new tasks
     const sql4 = "INSERT INTO `Task`(`taskID`, `projectID`, `taskName`, `deadline`, `taskStatusID`, `createdAt`, `teamID`) VALUES ?"

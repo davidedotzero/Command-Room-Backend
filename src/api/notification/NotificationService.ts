@@ -90,7 +90,7 @@ export async function updateUserNotification(userIds: Array<string>, notiId: num
                 }
             });
 
-            console.log(events);
+            // console.log(events);
 
             return pusher.triggerBatch(events);
         });
