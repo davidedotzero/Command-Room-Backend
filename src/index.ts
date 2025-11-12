@@ -39,15 +39,15 @@ app.use('/api/kpi/', kpiRouter);
 app.use('/api/noti/', notificationRouter);
 
 // heartbeat query for keeping connection alive.
-setInterval(() => {
-    db.query('SELECT 1')
-        .then(() => {
-            console.log('Database connection is alive. ' + new Date().toISOString());
-        })
-        .catch(err => {
-            console.error('Database heartbeat query failed:', err);
-        });
-}, 120000);
+// setInterval(() => {
+//     db.query('SELECT 1')
+//         .then(() => {
+//             console.log('Database connection is alive. ' + new Date().toISOString());
+//         })
+//         .catch(err => {
+//             console.error('Database heartbeat query failed:', err);
+//         });
+// }, 120000);
 
 app.get('/api/auth/google', passport.authenticate('google', {
     scope: ["profile", "email"],
