@@ -75,7 +75,7 @@ app.get('/api/auth/google/redirect', passport.authenticate('google', { session: 
         email: req?.user?.emails![0].value
     };
 
-    // @ts-expect-error
+    // @ts-expect-error as string cuz fuck it
     const token = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: process.env.JWT_EXPIRES as string })
     res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
 });
