@@ -199,6 +199,60 @@ router.get('/uid/:userID', passport.authenticate("jwt", { session: false }), asy
     }
 });
 
+router.get('/tid/:taskID', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const { taskID } = req.params;
+        const sql = `
+            SELECT
+                T.taskID, T.projectID, T.taskName, T.deadline, T.taskStatusID, T.teamHelpID,
+                T.helpReqAt, T.helpReqReason, T.logPreview, T.createdAt, T.updatedAt, T.teamID,
+                Team.teamName, TS.taskStatusName, TeamHelp.teamName as "teamHelpName", P.projectName,
+                W.workersList as "workers",
+                COALESCE(L.recentLogsCount, 0) as "recentLogsCount"
+            FROM Task T
+            JOIN Team ON T.teamID = Team.teamID
+            JOIN TaskStatus TS ON T.taskStatusID = TS.taskStatusID
+            JOIN Project P ON T.projectID = P.projectID
+            LEFT JOIN Team as TeamHelp ON T.teamHelpID = TeamHelp.teamID
+            LEFT JOIN (
+                SELECT
+                    TU.taskID,
+                    GROUP_CONCAT(            
+                        NULLIF(
+                            CONCAT_WS(":", U.userID, U.userName, U.email, U.teamID, TeamUser.teamName, U.isAdmin),
+                            ''
+                        )
+                        SEPARATOR ";"
+                    ) as workersList
+                FROM TaskUser TU    
+                JOIN User U ON TU.userID = U.userID
+                LEFT JOIN Team as TeamUser ON U.teamID = TeamUser.teamID
+                GROUP BY TU.taskID
+            ) W ON T.taskID = W.taskID
+
+            LEFT JOIN (
+                SELECT
+                    taskID,
+                    COUNT(eLogID) as recentLogsCount
+                FROM EditLog
+                WHERE date >= NOW() - INTERVAL 4 HOUR
+                GROUP BY taskID
+            ) L ON T.taskID = L.taskID
+
+            WHERE T.taskID = ?
+            ;
+        `;
+        const [results] = await db.query(sql, taskID);
+        const finalResult = parseWorkerString(results);
+        res.send(finalResult);
+    } catch (err) {
+        console.error(err);
+        console.log(new Date().toISOString());
+        console.log("=============================================================");
+        res.status(500).send('Error querying the database');
+    }
+});
+
 router.post("/", passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
         const newTask = req.body;
