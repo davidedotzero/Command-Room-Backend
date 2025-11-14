@@ -32,11 +32,9 @@ router.post('/all', passport.authenticate("jwt", { session: false }), async (req
 
         await connection.commit();
 
-        pusher.trigger("notify-all", "notify-all-toast-event", { message: data.message });
-        // @ts-expect-error userIds is an array so just FUCKING CAST IT BITCH
-        updateUserUnseenCount(userIds as Array<string>);
-        // @ts-expect-error userIds is an array so just FUCKING CAST IT BITCH
-        updateUserNotification(userIds as Array<string>, insertedNotiId);
+        await pusher.trigger("notify-all", "notify-all-toast-event", { message: data.message });
+        await updateUserUnseenCount((userIds as unknown) as string[]);
+        await updateUserNotification((userIds as unknown) as string[], insertedNotiId);
 
         res.status(200).send({ message: "Channel notify-all sent. @notify-all-toast-event, @notify-all-notiCard-event" });
     } catch (err) {
@@ -76,9 +74,9 @@ router.post('/teams', passport.authenticate("jwt", { session: false }), async (r
 
 
         // TODO: i dont fucking care i dont wanna make a fucking type
-        toastUser((userIds as Array<any>).map(x => x.userID), data.message);
-        updateUserUnseenCount((userIds as unknown) as string[]);
-        updateUserNotification((userIds as unknown) as string[], insertedNotiId);
+        await toastUser((userIds as Array<any>).map(x => x.userID), data.message);
+        await updateUserUnseenCount((userIds as unknown) as string[]);
+        await updateUserNotification((userIds as unknown) as string[], insertedNotiId);
 
         res.status(200).send({ message: `Channel private-team-${data.teamIDs} sent. @private-team-toast-event` });
     } catch (err) {
@@ -125,9 +123,9 @@ router.post('/teams/:projectID', passport.authenticate("jwt", { session: false }
         await connection.commit();
 
         // TODO: i dont fucking care i dont wanna make a fucking type
-        toastUser((userIds as Array<any>).map(x => x.userID), data.message);
-        updateUserUnseenCount((userIds as unknown) as string[]);
-        updateUserNotification((userIds as unknown) as string[], insertedNotiId);
+        await toastUser((userIds as Array<any>).map(x => x.userID), data.message);
+        await updateUserUnseenCount((userIds as unknown) as string[]);
+        await updateUserNotification((userIds as unknown) as string[], insertedNotiId);
 
         res.status(200).send({ message: `Channel private-team-${data.teamIDs} sent. @private-team-toast-event` });
     } catch (err) {
@@ -167,9 +165,9 @@ router.post('/users', passport.authenticate("jwt", { session: false }), async (r
         await connection.commit();
 
         // TODO: i dont fucking care i dont wanna make a fucking type
-        toastUser((userIds as Array<any>).map(x => x.userID), data.message);
-        updateUserUnseenCount((userIds as unknown) as string[]);
-        updateUserNotification((userIds as unknown) as string[], insertedNotiId);
+        await toastUser((userIds as Array<any>).map(x => x.userID), data.message);
+        await updateUserUnseenCount((userIds as unknown) as string[]);
+        await updateUserNotification((userIds as unknown) as string[], insertedNotiId);
 
         res.status(200).send({ message: `Channel private-user sent. @private-user-toast-event` });
     } catch (err) {
